@@ -1,3 +1,5 @@
-YMT-Akilli-Yemek-Tarifi-Web-Uygulamasi
+# "Akıllı Yemek Tarifi Uygulaması"
 
-Kullanıcıların ellerindeki malzemelere göre tarif önerileri sunan ve kişiselleştirilmiş yemek planları oluşturabilen bir web uygulaması geliştirilmesi.
+- Bu uygulamanın amacı kullanıcıların ellerindeki malzemelere göre tarif önerileri sunan ve kişiselleştirilmiş yemek planları oluşturabilen bir web uygulaması geliştirilmesi.
+
+
