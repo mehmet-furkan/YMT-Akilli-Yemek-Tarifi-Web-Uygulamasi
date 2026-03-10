@@ -73,6 +73,8 @@ Sistemin kullanıcıya sunacağı temel yetenekler aşağıda listelenmiştir:
 
 # 🚀 Akıllı Yemek Tarifi Web Uygulaması - Geliştirme Ortamı Kurulumu ve Doğrulama Rehberi
 
+**Hazırlayan:** Muhammed Ali Yücesu | **Tarih:** 10 Mart 2026
+
 Bu doküman, proje geliştirme sürecinde kullanılacak temel yazılım araçlarının kurulumu ve doğrulama adımlarını içermektedir. Projede tüm ekip üyelerinin ortak ve sorunsuz bir geliştirme ortamında çalışabilmesi için aşağıdaki adımların eksiksiz şekilde tamamlanması gerekmektedir.
 
 ## 🎯 Amaç
@@ -128,6 +130,16 @@ Kurulum işlemleri tamamlandıktan sonra terminal (veya Command Prompt/PowerShel
 node -v
 npm -v
 git --version
+```
+
+### Beklenen Sonuçlar
+* `node -v` komutu Node.js sürüm bilgisini göstermelidir.
+* `npm -v` komutu npm sürüm bilgisini göstermelidir.
+* `git --version` komutu Git sürüm bilgisini göstermelidir.
+
+> **Not:** Bu komutlardan herhangi biri hata verirse ilgili kurulum adımı tekrar kontrol edilmelidir.
+
+---
 
 ## 2. Hafta
 *(İlerleyen haftalarda doldurulacak)*
