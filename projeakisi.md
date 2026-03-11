@@ -3,7 +3,7 @@
 Bu dosya, "Akıllı Yemek Tarifi" takımının haftalık proje ilerlemesini ve üyelerin görev dağılımlarını içermektedir.
 
 ## 1. Hafta (9-12 Mart)
-* **Mehmet Furkan (Yönetici):** GitHub reposu oluşturuldu, branch koruma kuralları (main) ayarlandı. Proje akış dokümanı oluşturuldu.
+* **Mehmet Furkan (Yönetici):** GitHub reposu oluşturuldu, branch koruma kuralları (main) ayarlandı. Proje akış dokümanı oluşturuldu. Teknoloji araştırması ve seçimi gerçekleştirildi.
 * **Emre Cansever:** Proje için detaylı Gereksinim Analizi raporu oluşturuldu.
 * **Muhammed Ali Yücesu:** Ekip için Geliştirme Ortamı Kurulumu ve Doğrulama Rehberi dokümantasyonu hazırlandı.
 * **Emine Zehra Duyar :** Proje Analizi ve Tanımlama raporu oluşturuldu.
@@ -109,7 +109,7 @@ Sistemin kullanıcıya sunacağı temel yetenekler aşağıda listelenmiştir:
 
 
 
-#Teknoloji Araştırması ve Seçimi Raporu
+# Teknoloji Araştırması ve Seçimi Raporu
 
 **Sorumlu:** Mehmet Furkan Akyar | Tarih: 12 Mart 2026 Perşembe
 
