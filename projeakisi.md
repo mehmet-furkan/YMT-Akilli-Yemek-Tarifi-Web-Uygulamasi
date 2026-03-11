@@ -4,9 +4,13 @@
 
 ## 📌 Proje Analiz ve Tanımlama Raporu
 
-Bu döküman, projenin başlangıç aşamasında belirlenen temel vizyon, amaç, kapsam ve hedefleri içeren analiz raporudur.
+---
+
+Hazırlayan: Emine Zehra Duyar
+Tarih: 11 Mart 2026
 
 ---
+
 
 ### 1. Genel Vizyon 🎯
 Mutfakta dijital bir dönüşüm yaratarak, kullanıcının elindeki kısıtlı imkanları (malzemeleri) maksimum verimle birer ziyafete dönüştüren, akıllı bir mutfak asistanı oluşturmak. Vizyonumuz; yemek yapmayı bir planlama yükü olmaktan çıkarıp, eğlenceli ve sürdürülebilir bir aktivite haline getirmektir.
@@ -36,9 +40,4 @@ Kullanıcıların sahip olduğu malzemelerle yapılabilecek en uygun tarifleri s
 | **Mutfak Özgüveni** | Adım adım rehberlik sayesinde mutfakta yeni olanların bile başarılı olmasını sağlar. |
 
 ---
-
-### ⚙️ Kullanılan Teknolojiler
-* **Frontend:** React
-* **Backend:** Node.js, Express
-* **Database:** MongoDB
 
