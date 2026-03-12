@@ -23,6 +23,7 @@ Bütün üyeler halihazırda Whatsapp ve Github kullanmaktadır. Bu iki uygulama
 
 ---
  Karar:
+ 
 Slack, özellikle Mobil kullanılabilir olması ve yüksek iletişim kabiliyeti ile öne çıksada. Çalışmaların bilgisayarda yapılacağı, Başka iletişim uygulamalarının hali hazırda kullanılması ve proje için yetersiz bulunması sebepleri ile reddedilmiştir.
 
 Jirro, Aşırı sayıdaki özelliği ile dikkat çekicidir ancak aynı sebepten dolayı öğrenmesi zor ve aşırı bulunmuş ve reddedilmiştir.
@@ -34,5 +35,6 @@ Trello, Hızlı öğrenilmesi ve Görsel desteği ile önplana çıkmıştır. B
 ---
  Sonuç:
  
- Hesap açımı ve indirilebilmesi için Trello ana sayfası:
+ Hesap açımı ve kurulum için Trello ana sayfası:
+ 
  https://trello.com/tr
