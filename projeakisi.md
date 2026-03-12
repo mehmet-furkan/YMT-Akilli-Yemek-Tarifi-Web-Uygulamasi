@@ -21,3 +21,17 @@ Bütün üyeler halihazırda Whatsapp ve Github kullanmaktadır. Bu iki uygulama
 | Slack| Yüksek iletişim, Mobil desteği | Proje yönetimi odaklı değil |
 | Asana| Entegrasyonlar, Farklı düzen biçimleri | Ücretsiz sürüm sınırlı |
 
+---
+#Karar:
+Slack, özellikle Mobil kullanılabilir olması ve yüksek iletişim kabiliyeti ile öne çıksada. Çalışmaların bilgisayarda yapılacağı, Başka iletişim uygulamalarının hali hazırda kullanılması ve proje için yetersiz bulunması sebepleri ile reddedilmiştir.
+
+Jirro, Aşırı sayıdaki özelliği ile dikkat çekicidir ancak aynı sebepten dolayı öğrenmesi zor ve aşırı bulunmuş ve reddedilmiştir.
+
+Asana, Jirro'dan daha kolay öğrenilebilir olmasının yanında ondan sonraki en kabiliyetli program olarak belirlenmiştir. Ancak ücretsiz sürüm sınırlandırmaları olması uzun vadeli çalışma sırasında sorunlara sebep olabileceği endişesi ile reddedilmiştir.
+
+Trello, Hızlı öğrenilmesi ve Görsel desteği ile önplana çıkmıştır. Büyük projelerde yetersiz kalma olasılığı aşırı bir olasılık olarak belirlenmiştir. Proje ve onu geliştirecek ekip için en uygun program olduğuna karar kılınmıştır.
+
+---
+ #Sonuç
+ Hesap açımı ve indirilebilmesi için Trello ana sayfası:
+ https://trello.com/tr
