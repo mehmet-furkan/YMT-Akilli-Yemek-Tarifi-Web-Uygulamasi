@@ -60,5 +60,67 @@ Sistemin kullanıcıya sunacağı temel yetenekler aşağıda listelenmiştir:
 3.  **Prototip:** Figma veya benzeri bir araçla hazırlanmış ekran tasarımları.
 4.  **Kaynak Kodlar:** GitHub üzerinde tutulan Frontend ve Backend kodları.
 
+# 🎨 UI/UX Wireframe Tasarım Raporu: Akıllı Yemek Tarifi
+**Hazırlayan: Emre Cansever**
+Bu doküman, **Akıllı Yemek Tarifi** web uygulamasının kullanıcı deneyimi (UX) stratejilerini ve arayüz (UI) mimarisini detaylandırmaktadır. 
+
+---
+
+## 1. Tasarım Vizyonu ve Hedefler
+Uygulamanın temel amacı, kullanıcının mutfaktaki malzemeleri en verimli şekilde değerlendirmesini sağlamaktır. Tasarımda **"Hızlı Erişim"** ve **"Mutfak Dostu Arayüz"** prensipleri benimsenmiştir.
+
+* **Sadelik:** Karmaşık menüler yerine doğrudan sonuca odaklanan arama yapısı.
+* **Dinamizm:** Malzeme eklendikçe anlık güncellenen sonuçlar.
+* **Mobil Öncelikli (Mobile-First):** Yemek yaparken genellikle telefon kullanıldığı için dokunmatik dostu büyük butonlar.
+
+---
+
+## 2. Sayfa Yapıları ve Bileşenler (Wireframe Detayları)
+
+### A. Ana Sayfa: Akıllı Arama ve Giriş
+Bu ekran, uygulamanın kalbidir. Kullanıcıyı "Ne pişirsem?" sorusundan kurtarmayı hedefler.
+
+* **Hero Bölümü:** Merkezi bir arama kutusu.
+* **Malzeme Havuzu:** Kullanıcı malzeme yazdıkça (Örn: Domates, Biber) arama kutusunun altında oluşan etkileşimli "X" (kapat) butonlu etiketler.
+* **CTA (Eylem) Butonu:** "Tarifleri Filtrele" butonu (Zıt renk ile vurgulanmış).
+
+### B. Arama Sonuçları ve Filtreleme
+Kullanıcının kriterlerine en uygun tariflerin listelendiği alan.
+
+* **Yan Menü (Filtreler):** * Süre (15 dk / 30 dk / 60+ dk)
+    * Zorluk (Kolay / Orta / Zor)
+    * Beslenme (Vegan / Glutensiz / Keto)
+* **Tarif Kartları:** Her kartta yemeğin resmi, ismi, süresi ve **"Eksik Malzeme Sayısı"** (Örn: 1 malzeme eksik) bilgisi yer alır.
+
+### C. İnteraktif Tarif Detay Sayfası
+Kullanıcının mutfaktaki rehberi.
+
+* **Porsiyon Hesaplayıcı:** Kişi sayısı değiştirildiğinde malzeme miktarlarını (gr, adet) otomatik çarpan/bölen sistem.
+* **Checklist Malzemeler:** Kullanıcı hazırladığı malzemeye tik atarak takibini yapabilir.
+* **Adım Adım Talimatlar:** Büyük puntolu, göz yormayan, her adımın bir kart gibi ayrıldığı yapı.
+
+---
+
+## 3. Kullanıcı Akış Şeması (User Flow)
+
+1. **Keşif:** Kullanıcı elindeki malzemeleri arama çubuğuna girer.
+2. **Daraltma:** Filtreleri kullanarak "Hızlı" ve "Vejetaryen" seçeneklerini seçer.
+3. **Seçim:** Listeden en uygun tarifi seçer.
+4. **Uygulama:** Porsiyonu ayarlar ve adım adım talimatları izleyerek yemeği tamamlar.
+
+---
+
+## 4. Teknik UI Detayları
+* **Renk Paleti:** İştah açıcı ve doğal tonlar (Örn: Yaprak Yeşili, Sıcak Turuncu, Arka plan için Kırık Beyaz).
+* **Tipografi:** Okunabilirliği yüksek, tırnaksız (Sans-serif) yazı tipleri.
+* **İkonografi:** Mutfak gereçlerini ve malzeme türlerini temsil eden minimal çizgi ikonlar.
+
+---
+
+## 5. Roadmap & UX Geliştirmeleri
+- [ ] **Sesli Navigasyon:** Eller kirliyken "Sonraki Adım" diyerek tarif ilerletme.
+- [ ] **Karanlık Mod:** Gece geç saatte yemek yapanlar için göz koruması.
+- [ ] **Sosyal Paylaşım:** Hazırlanan yemeğin fotoğrafını çekip toplulukla paylaşma.  
+
 
 
