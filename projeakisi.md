@@ -365,3 +365,17 @@ Mutfak ortamında (genellikle mobil cihazdan ve eller doluyken) kullanım kolayl
 ## 🚀 3. Gelecek Geliştirmeler (Roadmap)
 - [ ] **Sesli Komut:** Yemek yaparken adımlar arası "Sonraki" komutuyla geçiş.
 - [ ] **Dark Mode:** Akşam yemek hazırlayanlar için göz yormayan arayüz.
+
+---
+
+## 3. Hafta(4 Nisan - )
+
+* **Mehmet Furkan (Yönetici):** GitHub reposu oluşturuldu, branch koruma kuralları (main) ayarlandı. Proje akış dokümanı oluşturuldu. Teknoloji araştırması ve seçimi gerçekleştirildi.
+* **Emre Cansever:** Proje için detaylı Gereksinim Analizi raporu oluşturuldu.
+* **Muhammed Ali Yücesu:** Ekip için Geliştirme Ortamı Kurulumu ve Doğrulama Rehberi dokümantasyonu hazırlandı.
+* **Emine Zehra Duyar :** Proje Analizi ve Tanımlama raporu oluşturuldu.
+* **Furkan Yılmaz:** [Bu hafta ne yapıldığı buraya yazılacak]
+* **Muhammed Hanifi Taş:** [Bu hafta ne yapıldığı buraya yazılacak]
+
+---
+
