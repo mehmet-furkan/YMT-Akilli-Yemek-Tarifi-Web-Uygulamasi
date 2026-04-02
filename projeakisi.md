@@ -244,9 +244,74 @@ git --version
 
 ---
 
+## 2. Hafta(13 Mart - 4 Nisan)
+
+* **Mehmet Furkan (Yönetici):** GitHub reposu oluşturuldu, branch koruma kuralları (main) ayarlandı. Proje akış dokümanı oluşturuldu. Teknoloji araştırması ve seçimi gerçekleştirildi.
+* **Emre Cansever:** Proje için detaylı Gereksinim Analizi raporu oluşturuldu.
+* **Muhammed Ali Yücesu:** Ekip için Geliştirme Ortamı Kurulumu ve Doğrulama Rehberi dokümantasyonu hazırlandı.
+* **Emine Zehra Duyar :** Proje Analizi ve Tanımlama raporu oluşturuldu.
+* **Furkan Yılmaz:** [Bu hafta ne yapıldığı buraya yazılacak]
+* **Muhammed Hanifi Taş:** [Bu hafta ne yapıldığı buraya yazılacak]
+
+---
+
+# 🗄️ MongoDB Veri Modeli Tasarımı
+
+### Emine Zehra Duyar-27 Mart
+
+Bu proje, NoSQL yapısına uygun, esnek ve yüksek performanslı arama odaklı bir veri mimarisi üzerine kurgulanmıştır.
+
+## 1. Users (Kullanıcılar) Koleksiyonu
+Sisteme kayıtlı kullanıcıların kimlik bilgilerini ve kişisel tercihlerini tutar.
+
+| Alan | Veri Tipi | Açıklama |
+| :--- | :--- | :--- |
+| **_id** | ObjectId | Benzersiz kullanıcı kimliği |
+| **name** | String | Ad ve Soyad |
+| **email** | String | E-posta adresi (Unique/Benzersiz) |
+| **password** | String | Hashlenmiş şifre |
+| **preferences** | Object | `diet` (dizi) ve `allergies` (dizi) bilgilerini içerir |
+| **favorites** | Array [ID] | Beğenilen tariflerin `Recipe` koleksiyonuna referansı |
+| **createdAt** | Date | Kayıt tarihi |
+
+## 2. Recipes (Tarifler) Koleksiyonu
+Uygulamanın temelini oluşturan tarif verilerini ve malzeme eşleştirme yapısını tutar.
+
+| Alan | Veri Tipi | Açıklama |
+| :--- | :--- | :--- |
+| **_id** | ObjectId | Benzersiz tarif kimliği |
+| **title** | String | Tarif adı |
+| **description** | String | Tarif hakkında kısa ön bilgi |
+| **ingredients** | Array [Obj] | `name`, `amount` ve `optional` (boolean) alanlarını içerir |
+| **instructions** | Array [Str] | Hazırlanış adımları (Sıralı liste) |
+| **prepTime** | Number | Dakika cinsinden hazırlama süresi |
+| **difficulty** | String | Zorluk seviyesi (Kolay, Orta, Zor) |
+| **tags** | Array [Str] | Mutfak türü veya öğün etiketleri (Örn: "Diyet", "Aperatif") |
+| **imageUrl** | String | Tarif görselinin URL bağlantısı |
+| **createdBy** | ObjectId | Tarifi ekleyen kullanıcı referansı |
+
+## 3. Ingredients (Malzemeler) Koleksiyonu
+Arama motorunda tutarlılık sağlamak ve otomatik tamamlama sunmak için kullanılan referans listesidir.
+
+| Alan | Veri Tipi | Açıklama |
+| :--- | :--- | :--- |
+| **_id** | ObjectId | Malzeme kimliği |
+| **name** | String | Malzeme adı (Örn: "Soğan", "Zeytinyağı") |
+| **category** | String | Kategori (Örn: "Sebze", "Baharat") |
+
+---
+
+## 🛠️ Tasarımın Teknik Avantajları
+* **Hızlı Arama:** `ingredients` alanı içindeki nesne yapısı sayesinde, belirli bir malzemeye sahip olan tüm tarifler tek bir sorgu ile (Index destekli) getirilebilir.
+* **Kişiselleştirme:** Kullanıcı şemasındaki `preferences` alanı, ana sayfada sunulacak "Öneri Motoru" için doğrudan filtreleme kriteri sağlar.
+* **İlişkisel Yapı:** MongoDB'nin `populate` özelliği kullanılarak, favori tarifler ve kullanıcı profili arasında verimli bir bağ kurulmuştur.
+
+## 🚀 3. Gelecek Geliştirmeler (Roadmap)
+- [ ] **Sesli Komut:** Yemek yaparken adımlar arası "Sonraki" komutuyla geçiş.
+- [ ] **Dark Mode:** Akşam yemek hazırlayanlar için göz yormayan arayüz.
 
 
-
+---
 
 
 ## 1. Proje Amacı ve Kapsamı
@@ -341,114 +406,3 @@ Mutfak ortamında (genellikle mobil cihazdan ve eller doluyken) kullanım kolayl
 ---
 
 
-### Hafta 3 Görev : MongoDB veritabanı için veri modellemesi ve şema Tasarımı
-
-
-# 🗄️ MongoDB Veri Modeli Tasarımı
-
-Bu proje, NoSQL yapısına uygun, esnek ve yüksek performanslı arama odaklı bir veri mimarisi üzerine kurgulanmıştır.
-
-## 1. Users (Kullanıcılar) Koleksiyonu
-Sisteme kayıtlı kullanıcıların kimlik bilgilerini ve kişisel tercihlerini tutar.
-
-| Alan | Veri Tipi | Açıklama |
-| :--- | :--- | :--- |
-| **_id** | ObjectId | Benzersiz kullanıcı kimliği |
-| **name** | String | Ad ve Soyad |
-| **email** | String | E-posta adresi (Unique/Benzersiz) |
-| **password** | String | Hashlenmiş şifre |
-| **preferences** | Object | `diet` (dizi) ve `allergies` (dizi) bilgilerini içerir |
-| **favorites** | Array [ID] | Beğenilen tariflerin `Recipe` koleksiyonuna referansı |
-| **createdAt** | Date | Kayıt tarihi |
-
-## 2. Recipes (Tarifler) Koleksiyonu
-Uygulamanın temelini oluşturan tarif verilerini ve malzeme eşleştirme yapısını tutar.
-
-| Alan | Veri Tipi | Açıklama |
-| :--- | :--- | :--- |
-| **_id** | ObjectId | Benzersiz tarif kimliği |
-| **title** | String | Tarif adı |
-| **description** | String | Tarif hakkında kısa ön bilgi |
-| **ingredients** | Array [Obj] | `name`, `amount` ve `optional` (boolean) alanlarını içerir |
-| **instructions** | Array [Str] | Hazırlanış adımları (Sıralı liste) |
-| **prepTime** | Number | Dakika cinsinden hazırlama süresi |
-| **difficulty** | String | Zorluk seviyesi (Kolay, Orta, Zor) |
-| **tags** | Array [Str] | Mutfak türü veya öğün etiketleri (Örn: "Diyet", "Aperatif") |
-| **imageUrl** | String | Tarif görselinin URL bağlantısı |
-| **createdBy** | ObjectId | Tarifi ekleyen kullanıcı referansı |
-
-## 3. Ingredients (Malzemeler) Koleksiyonu
-Arama motorunda tutarlılık sağlamak ve otomatik tamamlama sunmak için kullanılan referans listesidir.
-
-| Alan | Veri Tipi | Açıklama |
-| :--- | :--- | :--- |
-| **_id** | ObjectId | Malzeme kimliği |
-| **name** | String | Malzeme adı (Örn: "Soğan", "Zeytinyağı") |
-| **category** | String | Kategori (Örn: "Sebze", "Baharat") |
-
----
-
-## 🛠️ Tasarımın Teknik Avantajları
-* **Hızlı Arama:** `ingredients` alanı içindeki nesne yapısı sayesinde, belirli bir malzemeye sahip olan tüm tarifler tek bir sorgu ile (Index destekli) getirilebilir.
-* **Kişiselleştirme:** Kullanıcı şemasındaki `preferences` alanı, ana sayfada sunulacak "Öneri Motoru" için doğrudan filtreleme kriteri sağlar.
-* **İlişkisel Yapı:** MongoDB'nin `populate` özelliği kullanılarak, favori tarifler ve kullanıcı profili arasında verimli bir bağ kurulmuştur.
-
-
-
-## 2. Hafta
----
-### Emine Zehra Duyar-27 Mart
----
-
-# 🗄️ MongoDB Veri Modeli Tasarımı
-
-Bu proje, NoSQL yapısına uygun, esnek ve yüksek performanslı arama odaklı bir veri mimarisi üzerine kurgulanmıştır.
-
-## 1. Users (Kullanıcılar) Koleksiyonu
-Sisteme kayıtlı kullanıcıların kimlik bilgilerini ve kişisel tercihlerini tutar.
-
-| Alan | Veri Tipi | Açıklama |
-| :--- | :--- | :--- |
-| **_id** | ObjectId | Benzersiz kullanıcı kimliği |
-| **name** | String | Ad ve Soyad |
-| **email** | String | E-posta adresi (Unique/Benzersiz) |
-| **password** | String | Hashlenmiş şifre |
-| **preferences** | Object | `diet` (dizi) ve `allergies` (dizi) bilgilerini içerir |
-| **favorites** | Array [ID] | Beğenilen tariflerin `Recipe` koleksiyonuna referansı |
-| **createdAt** | Date | Kayıt tarihi |
-
-## 2. Recipes (Tarifler) Koleksiyonu
-Uygulamanın temelini oluşturan tarif verilerini ve malzeme eşleştirme yapısını tutar.
-
-| Alan | Veri Tipi | Açıklama |
-| :--- | :--- | :--- |
-| **_id** | ObjectId | Benzersiz tarif kimliği |
-| **title** | String | Tarif adı |
-| **description** | String | Tarif hakkında kısa ön bilgi |
-| **ingredients** | Array [Obj] | `name`, `amount` ve `optional` (boolean) alanlarını içerir |
-| **instructions** | Array [Str] | Hazırlanış adımları (Sıralı liste) |
-| **prepTime** | Number | Dakika cinsinden hazırlama süresi |
-| **difficulty** | String | Zorluk seviyesi (Kolay, Orta, Zor) |
-| **tags** | Array [Str] | Mutfak türü veya öğün etiketleri (Örn: "Diyet", "Aperatif") |
-| **imageUrl** | String | Tarif görselinin URL bağlantısı |
-| **createdBy** | ObjectId | Tarifi ekleyen kullanıcı referansı |
-
-## 3. Ingredients (Malzemeler) Koleksiyonu
-Arama motorunda tutarlılık sağlamak ve otomatik tamamlama sunmak için kullanılan referans listesidir.
-
-| Alan | Veri Tipi | Açıklama |
-| :--- | :--- | :--- |
-| **_id** | ObjectId | Malzeme kimliği |
-| **name** | String | Malzeme adı (Örn: "Soğan", "Zeytinyağı") |
-| **category** | String | Kategori (Örn: "Sebze", "Baharat") |
-
----
-
-## 🛠️ Tasarımın Teknik Avantajları
-* **Hızlı Arama:** `ingredients` alanı içindeki nesne yapısı sayesinde, belirli bir malzemeye sahip olan tüm tarifler tek bir sorgu ile (Index destekli) getirilebilir.
-* **Kişiselleştirme:** Kullanıcı şemasındaki `preferences` alanı, ana sayfada sunulacak "Öneri Motoru" için doğrudan filtreleme kriteri sağlar.
-* **İlişkisel Yapı:** MongoDB'nin `populate` özelliği kullanılarak, favori tarifler ve kullanıcı profili arasında verimli bir bağ kurulmuştur.
-
-## 🚀 3. Gelecek Geliştirmeler (Roadmap)
-- [ ] **Sesli Komut:** Yemek yaparken adımlar arası "Sonraki" komutuyla geçiş.
-- [ ] **Dark Mode:** Akşam yemek hazırlayanlar için göz yormayan arayüz.
