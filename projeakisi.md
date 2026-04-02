@@ -306,11 +306,6 @@ Arama motorunda tutarlılık sağlamak ve otomatik tamamlama sunmak için kullan
 * **Kişiselleştirme:** Kullanıcı şemasındaki `preferences` alanı, ana sayfada sunulacak "Öneri Motoru" için doğrudan filtreleme kriteri sağlar.
 * **İlişkisel Yapı:** MongoDB'nin `populate` özelliği kullanılarak, favori tarifler ve kullanıcı profili arasında verimli bir bağ kurulmuştur.
 
-## 🚀 3. Gelecek Geliştirmeler (Roadmap)
-- [ ] **Sesli Komut:** Yemek yaparken adımlar arası "Sonraki" komutuyla geçiş.
-- [ ] **Dark Mode:** Akşam yemek hazırlayanlar için göz yormayan arayüz.
-
-
 ---
 
 
@@ -406,3 +401,6 @@ Mutfak ortamında (genellikle mobil cihazdan ve eller doluyken) kullanım kolayl
 ---
 
 
+## 🚀 3. Gelecek Geliştirmeler (Roadmap)
+- [ ] **Sesli Komut:** Yemek yaparken adımlar arası "Sonraki" komutuyla geçiş.
+- [ ] **Dark Mode:** Akşam yemek hazırlayanlar için göz yormayan arayüz.
