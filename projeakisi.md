@@ -367,6 +367,115 @@ Mutfak ortamında (genellikle mobil cihazdan ve eller doluyken) kullanım kolayl
 - [ ] **Dark Mode:** Akşam yemek hazırlayanlar için göz yormayan arayüz.
 
 ---
+# API Endpoint Tasarımı ve Dokümantasyonu: Akıllı Yemek Tarifi
+
+**Hazırlayan: Muhammed Ali Yücesu**  
+**Tarih: 4 Nisan 2026**
+
+Bu çalışma, Akıllı Yemek Tarifi’nin web tabanlı arka uç tarafında kullanılacak API uç noktalarının belirlenmesi ve temel dokümantasyonunun oluşturulması amacıyla hazırlanmıştır. Node.js ve Express yapısı sayesinde, ön uç ile arka uç arasında düzenli ve anlaşılır bir veri iletişimi sağlanması hedeflenmiştir.
+
+## 1. API Tasarım Amacı
+
+Bu çalışmanın temel amacı, uygulamada kullanılacak ana işlemler için gerekli API uç noktalarını belirlemektir. Kullanıcıların sisteme kayıt olması, giriş yapması, tarifleri görüntülemesi, malzemeye göre tarif araması, favori tariflerini kaydetmesi ve kişiselleştirilmiş öneriler alabilmesi için uygun bir API yapısı oluşturulmuştur.
+
+### 1.1. Temel Gereksinimler
+
+API uç noktaları belirlenirken şu noktalar esas alınmıştır:
+
+- Kullanıcı kayıt ve giriş sistemi
+- Malzemeye göre tarif arama
+- Tarif filtreleme
+- Tarif detaylarını görüntüleme
+- Favori tarifleri kaydetme
+- Kullanıcı tercihlerini saklama
+- Haftalık yemek planı oluşturma
+
+## 2. Temel Endpoint Yapıları
+
+### A. Auth Endpointleri
+
+Kullanıcı işlemleri için aşağıdaki uç noktalar planlanmıştır:
+
+- `POST /api/auth/register` → Yeni kullanıcı kaydı oluşturur
+- `POST /api/auth/login` → Kullanıcının giriş yapmasını sağlar
+
+### B. User Endpointleri
+
+Kullanıcı profil işlemleri için:
+
+- `GET /api/users/profile` → Kullanıcı profilini getirir
+- `PUT /api/users/profile` → Profil bilgilerini ve tercihleri günceller
+
+### C. Recipe Endpointleri
+
+Tarif işlemleri için temel yapı şöyledir:
+
+- `GET /api/recipes` → Tüm tarifleri listeler
+- `GET /api/recipes/:id` → Seçili tarifin detayını getirir
+- `POST /api/recipes` → Yeni tarif ekler
+- `PUT /api/recipes/:id` → Tarif günceller
+- `DELETE /api/recipes/:id` → Tarif siler
+
+### D. Ingredient Endpointleri
+
+Malzeme odaklı arama için:
+
+- `GET /api/ingredients` → Tüm malzemeleri listeler
+- `GET /api/ingredients/search?q=domates` → Malzeme araması yapar
+
+## 3. Akıllı Arama ve Filtreleme Endpointleri
+
+### 3.1. Malzemeye Göre Tarif Bulma
+
+Projenin en önemli işlevlerinden biri, kullanıcının elindeki malzemelere göre uygun tarifleri göstermektir. Bunun için şu endpoint önerilmiştir:
+
+- `POST /api/recipes/search-by-ingredients`
+
+Kullanıcı örneğin tavuk, makarna ve krema gibi malzemeleri gönderdiğinde sistem uygun tarifleri, eksik malzemeleri ve eşleşme oranını döndürür. Bu yapı doğrudan proje amacına uygundur.
+
+### 3.2. Tarif Filtreleme
+
+Tariflerin süre, zorluk ve diyet türüne göre filtrelenebilmesi için şu endpoint kullanılabilir:
+
+- `POST /api/recipes/filter`
+
+Bu sayede kullanıcı yalnızca kendisine uygun tarifleri daha kolay görebilir.
+
+## 4. Favori ve Öneri Endpointleri
+
+### 4.1. Favori İşlemleri
+
+Kullanıcıların beğendiği tarifleri saklayabilmesi için şu endpointler planlanmıştır:
+
+- `POST /api/favorites/:recipeId` → Favorilere ekle
+- `GET /api/favorites` → Favorileri listele
+- `DELETE /api/favorites/:recipeId` → Favorilerden çıkar
+
+Bu yapı, kullanıcı deneyimini kişiselleştirmek için önemlidir.
+
+### 4.2. Öneri Sistemi
+
+Kullanıcının geçmiş işlemlerine ve tercihlerine göre öneri sunmak için:
+
+- `GET /api/recommendations`
+
+Bu endpoint ile “Sizin İçin Seçtiklerimiz” mantığı desteklenebilir.
+
+## 5. Meal Planner Endpointleri
+
+Projede haftalık yemek planlayıcı da yer aldığı için şu endpointler önerilmiştir:
+
+- `GET /api/meal-planner` → Haftalık planı getirir
+- `POST /api/meal-planner` → Haftalık plana öğün ekler
+- `DELETE /api/meal-planner/:id` → Eklenen öğünü siler
+
+Bu yapı, kullanıcının yemek planını düzenli şekilde oluşturmasına yardımcı olur.
+
+## 6. Sonuç
+
+Bu API endpoint tasarımı, Akıllı Yemek Tarifi web uygulamasının temel backend ihtiyaçlarını karşılayacak şekilde hazırlanmıştır. Belirlenen endpointler; kullanıcı yönetimi, tarif işlemleri, malzeme bazlı arama, filtreleme, favoriler, öneri sistemi ve haftalık planlama gibi ana işlevleri kapsamaktadır. Bu yapı sayesinde backend geliştirme süreci daha düzenli ilerleyecek ve frontend ile veri iletişimi daha net hale gelecektir.
+
+---
 
 ## 3. Hafta(4 Nisan - )
 
