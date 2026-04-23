@@ -488,4 +488,78 @@ Bu API endpoint tasarımı, Akıllı Yemek Tarifi web uygulamasının temel back
 
 ---
 
+# API Endpoint Güvenlik Testleri: Akıllı Yemek Tarifi
 
+**Hazırlayan: Muhammed Ali Yücesu**  
+**Tarih: 23 Nisan 2026**
+
+Bu çalışma, Akıllı Yemek Tarifi web uygulamasında kullanılacak API endpointlerinin güvenlik açısından değerlendirilmesi amacıyla hazırlanmıştır. Test sürecinde, kullanıcı işlemleri, tarif işlemleri, favoriler, arama ve planlama endpointleri üzerinde temel güvenlik kontrolleri ele alınmıştır. Amaç, olası güvenlik açıklarını erken aşamada fark etmek ve uygulamanın daha güvenli hale getirilmesine katkı sağlamaktır.
+
+## 1. Güvenlik Testlerinin Amacı
+
+Bu testlerin temel amacı, API endpointlerinin yaygın saldırı türlerine karşı ne kadar dayanıklı olduğunu kontrol etmektir. Özellikle kullanıcıdan veri alan giriş noktalarında hatalı doğrulama, yetkisiz erişim, kötü amaçlı veri gönderimi ve kullanıcı verilerinin korunması gibi konular incelenmelidir.
+
+Projede kullanıcı hesabı, favoriler, tarif arama, filtreleme ve haftalık planlama gibi işlemler bulunduğu için güvenlik testleri bu alanlara odaklanmalıdır.
+
+## 2. Test Kapsamı
+
+Güvenlik testleri aşağıdaki endpoint grupları üzerinde düşünülmüştür:
+
+- Auth endpointleri
+- User endpointleri
+- Recipe endpointleri
+- Ingredient endpointleri
+- Favorite endpointleri
+- Meal planner endpointleri
+
+Bu endpointler kullanıcı verisi aldığı veya kullanıcıya özel işlem yaptığı için güvenlik açısından önemlidir.
+
+## 3. Test Edilen Güvenlik Başlıkları
+
+### A. Yetkisiz Erişim Kontrolü
+Koruma gerektiren endpointlere giriş yapılmadan erişilmeye çalışıldığında sistemin erişimi reddetmesi gerekir. Özellikle profil, favoriler ve haftalık plan endpointlerinde bu kontrol zorunludur.
+
+### B. Yetkilendirme Kontrolü
+Bir kullanıcının başka bir kullanıcıya ait verilere erişememesi gerekir. Örneğin bir kullanıcı yalnızca kendi favorilerini ve kendi planlama verilerini görebilmelidir.
+
+### C. Girdi Doğrulama Testleri
+API’ye gönderilen veriler kontrol edilmelidir. Boş alanlar, beklenmeyen veri tipleri, aşırı uzun metinler ve hatalı formatta girişler kabul edilmemelidir.
+
+### D. Enjeksiyon Testleri
+Projede MongoDB kullanıldığı için giriş alanlarında yalnızca genel enjeksiyon mantığı değil, özellikle NoSQL tabanlı giriş manipülasyonlarına karşı koruma düşünülmelidir. Kullanıcıdan alınan veriler doğrudan sorguya dönüştürülmemelidir.
+
+### E. XSS Kontrolü
+Kullanıcıdan alınan ad, tarif açıklaması veya yorum benzeri metin alanlarında zararlı script içeriklerinin sisteme kaydedilmemesi veya işlenmemesi gerekir.
+
+### F. Hata Mesajı Kontrolü
+API hata verdiğinde gereğinden fazla teknik detay göstermemelidir. Veritabanı yapısı, token bilgisi veya sunucu iç yapısı hata mesajında açık edilmemelidir.
+
+## 4. Beklenen Güvenli Davranışlar
+
+Yapılan testler sonucunda güvenli bir API’de şu davranışlar beklenir:
+
+- Giriş yapılmadan korumalı endpointlere erişim engellenmelidir.
+- Her kullanıcı yalnızca kendi verileri üzerinde işlem yapabilmelidir.
+- Hatalı veya eksik veri gönderildiğinde uygun hata cevabı dönmelidir.
+- Zararlı içerikler işlenmeden önce filtrelenmelidir.
+- Sunucu hata mesajları sade ve kontrollü olmalıdır.
+- Kimlik doğrulama işlemlerinde token kontrolü düzenli şekilde yapılmalıdır.
+
+## 5. Önerilen Koruma Yöntemleri
+
+API güvenliğini artırmak için aşağıdaki önlemler uygulanabilir:
+
+- Girdi doğrulama ve temizleme işlemleri eklenmesi
+- Kimlik doğrulama için token bazlı koruma kullanılması
+- Yetkilendirme kontrollerinin her özel endpointte ayrı yapılması
+- Hassas verilerin istemciye gereksiz şekilde gönderilmemesi
+- Rate limiting uygulanması
+- Güvenli hata yönetimi yapılması
+- Şifrelerin hashlenerek saklanması
+
+## 6. Sonuç
+
+Bu güvenlik testi çalışması, Akıllı Yemek Tarifi projesindeki API endpointlerinin temel güvenlik gereksinimlerini değerlendirmek için hazırlanmıştır. Özellikle kullanıcı işlemleri, favoriler, tarif arama ve planlama gibi alanlarda kimlik doğrulama, yetkilendirme, giriş doğrulama ve zararlı içerik kontrolü büyük önem taşımaktadır. Güvenlik testlerinin düzenli şekilde yapılması, projenin daha sağlam ve güvenilir bir backend yapısına sahip olmasına katkı sağlayacaktır.
+
+
+---
