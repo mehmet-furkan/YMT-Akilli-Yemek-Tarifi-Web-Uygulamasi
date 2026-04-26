@@ -1,0 +1,29 @@
+{
+  "name": "nightcodekitchen-backend",
+  "version": "1.0.0",
+  "description": "Akıllı Yemek Tarifi Web Uygulaması - Night Code Kitchen Backend API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "recipe",
+    "food",
+    "mern",
+    "api"
+  ],
+  "author": "Night Code Kitchen Team",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.5.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
