@@ -246,10 +246,10 @@ git --version
 
 ## 2. Hafta(13 Mart - 4 Nisan)
 
-* **Mehmet Furkan (Yönetici):** GitHub reposu oluşturuldu, branch koruma kuralları (main) ayarlandı. Proje akış dokümanı oluşturuldu. Teknoloji araştırması ve seçimi gerçekleştirildi.
-* **Emre Cansever:** Proje için detaylı Gereksinim Analizi raporu oluşturuldu.
-* **Muhammed Ali Yücesu:** Ekip için Geliştirme Ortamı Kurulumu ve Doğrulama Rehberi dokümantasyonu hazırlandı.
-* **Emine Zehra Duyar :** Proje Analizi ve Tanımlama raporu oluşturuldu.
+* **Mehmet Furkan (Yönetici):** [Bu hafta ne yapıldığı buraya yazılacak].
+* **Emre Cansever:** [Bu hafta ne yapıldığı buraya yazılacak]
+* **Muhammed Ali Yücesu:** [Bu hafta ne yapıldığı buraya yazılacak]
+* **Emine Zehra Duyar :** [Bu hafta ne yapıldığı buraya yazılacak]
 * **Furkan Yılmaz:** [Bu hafta ne yapıldığı buraya yazılacak]
 * **Muhammed Hanifi Taş:** [Bu hafta ne yapıldığı buraya yazılacak]
 
@@ -479,10 +479,10 @@ Bu API endpoint tasarımı, Akıllı Yemek Tarifi web uygulamasının temel back
 
 ## 3. Hafta(4 Nisan - )
 
-* **Mehmet Furkan (Yönetici):** GitHub reposu oluşturuldu, branch koruma kuralları (main) ayarlandı. Proje akış dokümanı oluşturuldu. Teknoloji araştırması ve seçimi gerçekleştirildi.
-* **Emre Cansever:** Proje için detaylı Gereksinim Analizi raporu oluşturuldu.
-* **Muhammed Ali Yücesu:** Ekip için Geliştirme Ortamı Kurulumu ve Doğrulama Rehberi dokümantasyonu hazırlandı.
-* **Emine Zehra Duyar :** Proje Analizi ve Tanımlama raporu oluşturuldu.
+* **Mehmet Furkan (Yönetici):** [Bu hafta ne yapıldığı buraya yazılacak].
+* **Emre Cansever:** [Bu hafta ne yapıldığı buraya yazılacak]
+* **Muhammed Ali Yücesu:** [Bu hafta ne yapıldığı buraya yazılacak]
+* **Emine Zehra Duyar :** [Bu hafta ne yapıldığı buraya yazılacak]
 * **Furkan Yılmaz:** [Bu hafta ne yapıldığı buraya yazılacak]
 * **Muhammed Hanifi Taş:** [Bu hafta ne yapıldığı buraya yazılacak]
 
