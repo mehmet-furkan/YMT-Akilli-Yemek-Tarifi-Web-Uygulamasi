@@ -50,15 +50,14 @@ const UserSchema = new mongoose.Schema(
 );
 
 // --- Middleware: Kayıt öncesi şifreyi hashle ---
-UserSchema.pre("save", async function (next) {
+UserSchema.pre("save", async function () {
   // Şifre değişmediyse hashleme
   if (!this.isModified("password")) {
-    return next();
+    return;
   }
 
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  next();
 });
 
 // --- Metod: Girilen şifre ile hashlenmiş şifreyi karşılaştır ---
