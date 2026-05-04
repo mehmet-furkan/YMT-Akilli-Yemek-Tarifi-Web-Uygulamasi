@@ -563,3 +563,64 @@ Bu güvenlik testi çalışması, Akıllı Yemek Tarifi projesindeki API endpoin
 
 
 ---
+
+# MongoDB Veritabanı Şeması Tasarımı
+
+**Proje:** Akıllı Yemek Tarifi Web Uygulaması
+**Hazırlayan:** Emre Cansever
+**Teknoloji:** MongoDB (NoSQL)
+
+---
+
+## 1. Tasarım Hedefleri
+Bu veritabanı şeması; ölçeklenebilirlik, yüksek performanslı sorgulama ve veri bütünlüğü prensiplerine dayanarak tasarlanmıştır.
+
+## 2. Koleksiyon Yapıları
+
+### A. Users (Kullanıcılar)
+Kullanıcı profil bilgilerini ve yetkilendirmeleri saklar.
+- `_id`: **ObjectId** (Primary Key)
+- `username`: **String** (Unique, Index)
+- `email`: **String** (Unique)
+- `password_hash`: **String** (Hashed password)
+- `role`: **String** (Enum: "user", "admin")
+- `favorites`: **Array [ObjectId]** (Ref: Recipes)
+- `created_at`: **Date**
+
+### B. Ingredients (Malzemeler)
+Uygulamanın "akıllı malzeme eşleştirme" özelliğini besleyen temel veri kümesi.
+- `_id`: **ObjectId**
+- `name`: **String** (Index) - Örn: "Yumurta"
+- `category`: **String** - Örn: "Sebze", "Baharat"
+- `unit`: **String** - Örn: "gram", "adet", "ml"
+
+### C. Recipes (Tarifler)
+Sistemin ana veri yükünü taşıyan koleksiyon.
+- `_id`: **ObjectId**
+- `title`: **String** (Text Index)
+- `description`: **String**
+- `ingredients`: **Array [Object]**
+  - `ingredient_id`: **ObjectId** (Ref: Ingredients)
+  - `amount`: **Number**
+- `instructions`: **Array [String]** - Adım adım hazırlık rehberi.
+- `prep_time`: **Number** - Dakika cinsinden.
+- `difficulty`: **String** (Enum: "Kolay", "Orta", "Zor")
+- `tags`: **Array [String]** - Örn: "Vejetaryen", "Diyet"
+- `author_id`: **ObjectId** (Ref: Users)
+
+### D. MealPlans (Yemek Planları)
+Kullanıcıların takvim tabanlı planlarını saklar.
+- `_id`: **ObjectId**
+- `user_id`: **ObjectId** (Ref: Users, Index)
+- `date`: **Date** (Index)
+- `meals`: **Array [Object]**
+  - `meal_type`: **String** (Örn: "Kahvaltı", "Öğle")
+  - `recipe_id`: **ObjectId** (Ref: Recipes)
+
+---
+
+## 3. Optimizasyon ve İlişkiler
+* **İndeksleme:** Sık sorgulanan `username`, `email` ve `name` alanları için indeksler tanımlanmıştır.
+* **Text Search:** Tarif aramalarını hızlandırmak için `title` üzerinde metin indeksi oluşturulmuştur.
+* **İlişkiler:** Veri tutarlılığı için koleksiyonlar arası referans (ObjectId) yöntemi kullanılmıştır.
+
