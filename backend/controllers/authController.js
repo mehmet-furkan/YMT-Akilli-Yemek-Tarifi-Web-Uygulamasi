@@ -9,20 +9,15 @@ const generateToken = (id) => {
 };
 
 // @desc    Yeni kullanıcı kaydı
-// @route   POST /api/auth/register
-// @access  Public
 const registerUser = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
-    // E-posta kontrolü
     const userExists = await User.findOne({ email });
     if (userExists) {
-      res.status(400);
-      throw new Error("Bu e-posta adresi zaten kayıtlı");
+      return res.status(400).json({ success: false, message: "Bu e-posta adresi zaten kayıtlı" });
     }
 
-    // Kullanıcı oluştur
     const user = await User.create({ name, email, password });
 
     if (user) {
@@ -32,7 +27,6 @@ const registerUser = async (req, res, next) => {
           _id: user._id,
           name: user.name,
           email: user.email,
-          preferences: user.preferences,
           token: generateToken(user._id),
         },
       });
@@ -42,27 +36,21 @@ const registerUser = async (req, res, next) => {
   }
 };
 
-// @desc    Kullanıcı girişi
-// @route   POST /api/auth/login
-// @access  Public
-const loginUser = async (req, res, next) => {
+// @desc    Kullanıcı girişi (İsmini authUser yaptık ki rotayla eşleşsin)
+const authUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // Kullanıcıyı e-posta ile bul (şifreyi de dahil et)
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
-      res.status(401);
-      throw new Error("Geçersiz e-posta veya şifre");
+      return res.status(401).json({ success: false, message: "Geçersiz e-posta veya şifre" });
     }
 
-    // Şifre kontrolü
     const isMatch = await user.matchPassword(password);
 
     if (!isMatch) {
-      res.status(401);
-      throw new Error("Geçersiz e-posta veya şifre");
+      return res.status(401).json({ success: false, message: "Geçersiz e-posta veya şifre" });
     }
 
     res.json({
@@ -71,7 +59,6 @@ const loginUser = async (req, res, next) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        preferences: user.preferences,
         token: generateToken(user._id),
       },
     });
@@ -80,4 +67,5 @@ const loginUser = async (req, res, next) => {
   }
 };
 
-module.exports = { registerUser, loginUser };
+// BURASI ÇOK ÖNEMLİ: İsimler rotadakiyle aynı oldu
+module.exports = { registerUser, authUser };
