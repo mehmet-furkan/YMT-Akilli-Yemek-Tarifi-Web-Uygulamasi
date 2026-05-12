@@ -45,6 +45,9 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/recipes", require("./routes/recipeRoutes"));
 
+// --- 📄 SWAGGER UI ---
+require("./config/swagger")(app);
+
 app.get("/", (req, res) => res.json({ status: "success", message: "Night Code Kitchen API Güvende!" }));
 
 // Hata Yönetimi

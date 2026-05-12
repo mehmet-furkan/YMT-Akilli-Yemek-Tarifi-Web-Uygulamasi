@@ -1,0 +1,773 @@
+openapi: "3.0.3"
+info:
+  title: Night Code Kitchen API
+  description: Akıllı Yemek Tarifi Web Uygulaması — Kullanıcıların ellerindeki malzemelere göre tarif öneren MERN stack API.
+  version: "1.0.0"
+  contact:
+    name: Night Code Kitchen Team
+
+servers:
+  - url: http://localhost:5000/api
+    description: Local development
+
+tags:
+  - name: Auth
+    description: Kimlik doğrulama işlemleri
+  - name: Recipes
+    description: Tarif CRUD ve arama
+  - name: Favorites
+    description: Favori tarif işlemleri
+  - name: Recommendations
+    description: Malzemeye göre akıllı tarif önerileri
+  - name: Meal Plans
+    description: Haftalık yemek planlayıcı
+
+# ──────────────────────────────────────────
+# PATHS
+# ──────────────────────────────────────────
+paths:
+  # ── AUTH ────────────────────────────────
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Yeni kullanıcı kaydı oluşturur.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+            example:
+              name: "Mehmet Furkan"
+              email: "mehmet@nightcodekitchen.com"
+              password: "Abc123!"
+      responses:
+        "201":
+          description: Kayıt başarılı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+              example:
+                success: true
+                data:
+                  _id: "664a1b2c3d4e5f6a7b8c9d0e"
+                  name: "Mehmet Furkan"
+                  email: "mehmet@nightcodekitchen.com"
+                  preferences: { diet: [], allergies: [] }
+                  token: "eyJhbGciOiJIUzI1NiIs..."
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "409":
+          description: E-posta zaten kayıtlı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                message: "Bu e-posta adresi zaten kayıtlı"
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Kullanıcı girişi yapar ve JWT token döner.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            example:
+              email: "mehmet@nightcodekitchen.com"
+              password: "Abc123!"
+      responses:
+        "200":
+          description: Giriş başarılı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Geçersiz kimlik bilgileri
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                message: "Geçersiz e-posta veya şifre"
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Oturum açmış kullanıcının bilgilerini döner.
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Kullanıcı bilgileri
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Kullanıcı oturumunu sonlandırır.
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Çıkış başarılı
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ── RECIPES ─────────────────────────────
+  /recipes:
+    get:
+      tags: [Recipes]
+      summary: Tarifleri listeler, arama ve filtreleme destekler.
+      parameters:
+        - name: search
+          in: query
+          schema: { type: string }
+          description: Başlık veya açıklamada metin araması
+        - name: ingredient
+          in: query
+          schema:
+            type: array
+            items: { type: string }
+          style: form
+          explode: true
+          description: "Malzeme filtresi (birden fazla gönderilebilir: ?ingredient=domates&ingredient=biber)"
+        - name: category
+          in: query
+          schema: { type: string }
+          description: Mutfak türü filtresi
+        - name: maxCookTime
+          in: query
+          schema: { type: integer }
+          description: Maksimum hazırlama süresi (dakika)
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        "200":
+          description: Tarif listesi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  count: { type: integer }
+                  page: { type: integer }
+                  totalPages: { type: integer }
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Recipe"
+              example:
+                success: true
+                count: 1
+                page: 1
+                totalPages: 1
+                data:
+                  - _id: "664b..."
+                    title: "Menemen"
+                    ingredients: ["Domates", "Biber", "Yumurta"]
+                    instructions: "Zeytinyağını ısıtın..."
+                    prepTime: 20
+                    author: { _id: "664a...", name: "Mehmet Furkan" }
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    post:
+      tags: [Recipes]
+      summary: Yeni tarif oluşturur (giriş gerekli).
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecipeCreateRequest"
+            example:
+              title: "Menemen"
+              ingredients: ["Domates", "Biber", "Yumurta", "Zeytinyağı", "Tuz"]
+              instructions: "Zeytinyağını tavada ısıtın. Domates ve biberleri doğrayıp ekleyin. Yumurtaları kırıp karıştırın."
+              prepTime: 20
+      responses:
+        "201":
+          description: Tarif oluşturuldu
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: "#/components/schemas/Recipe"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /recipes/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string }
+        description: Tarif ObjectId
+
+    get:
+      tags: [Recipes]
+      summary: Tek bir tarifin detayını getirir.
+      responses:
+        "200":
+          description: Tarif detayı
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: "#/components/schemas/Recipe"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [Recipes]
+      summary: Tarifi günceller (giriş + sahiplik gerekli).
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecipeCreateRequest"
+      responses:
+        "200":
+          description: Tarif güncellendi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: "#/components/schemas/Recipe"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags: [Recipes]
+      summary: Tarifi siler (giriş + sahiplik gerekli).
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Tarif silindi
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ── FAVORITES ───────────────────────────
+  /favorites:
+    get:
+      tags: [Favorites]
+      summary: Kullanıcının favori tariflerini listeler.
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Favori listesi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  count: { type: integer }
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Recipe"
+              example:
+                success: true
+                count: 2
+                data:
+                  - _id: "664b..."
+                    title: "Menemen"
+                    ingredients: ["Domates", "Biber", "Yumurta"]
+                    prepTime: 20
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /favorites/{recipeId}:
+    parameters:
+      - name: recipeId
+        in: path
+        required: true
+        schema: { type: string }
+        description: Favoriye eklenecek tarif ID
+
+    post:
+      tags: [Favorites]
+      summary: Tarifi favorilere ekler.
+      security:
+        - BearerAuth: []
+      responses:
+        "201":
+          description: Favorilere eklendi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+              example:
+                success: true
+                message: "Tarif favorilere eklendi"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Tarif zaten favorilerde
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                message: "Bu tarif zaten favorilerinizde"
+
+    delete:
+      tags: [Favorites]
+      summary: Tarifi favorilerden çıkarır.
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Favorilerden çıkarıldı
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ── RECOMMENDATIONS ─────────────────────
+  /recommendations:
+    post:
+      tags: [Recommendations]
+      summary: Girilen malzemelere göre eşleşme puanıyla tarif önerir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecommendationRequest"
+            example:
+              ingredients: ["domates", "biber", "yumurta"]
+      responses:
+        "200":
+          description: Eşleşen tarifler puanlarıyla birlikte
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecommendationResponse"
+              example:
+                success: true
+                count: 2
+                data:
+                  - recipe:
+                      _id: "664b..."
+                      title: "Menemen"
+                      ingredients: ["Domates", "Biber", "Yumurta", "Zeytinyağı"]
+                      prepTime: 20
+                    score: 0.75
+                    missingIngredients: ["Zeytinyağı"]
+                  - recipe:
+                      _id: "664c..."
+                      title: "Domates Çorbası"
+                      ingredients: ["Domates", "Un", "Tereyağı"]
+                      prepTime: 30
+                    score: 0.33
+                    missingIngredients: ["Un", "Tereyağı"]
+        "400":
+          $ref: "#/components/responses/ValidationError"
+
+  # ── MEAL PLANS ──────────────────────────
+  /meal-plans:
+    get:
+      tags: [Meal Plans]
+      summary: Belirtilen tarih aralığındaki yemek planlarını getirir.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema: { type: string, format: date }
+          description: Başlangıç tarihi (YYYY-MM-DD)
+        - name: to
+          in: query
+          required: true
+          schema: { type: string, format: date }
+          description: Bitiş tarihi (YYYY-MM-DD)
+      responses:
+        "200":
+          description: Yemek planları listesi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/MealPlan"
+              example:
+                success: true
+                data:
+                  - _id: "665a..."
+                    date: "2026-05-12"
+                    meals:
+                      - type: "Kahvaltı"
+                        recipe: { _id: "664b...", title: "Menemen" }
+                      - type: "Akşam Yemeği"
+                        recipe: { _id: "664c...", title: "Mercimek Çorbası" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      tags: [Meal Plans]
+      summary: Yeni yemek planı oluşturur.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MealPlanCreateRequest"
+            example:
+              date: "2026-05-14"
+              meals:
+                - type: "Kahvaltı"
+                  recipeId: "664b..."
+                - type: "Akşam Yemeği"
+                  recipeId: "664c..."
+      responses:
+        "201":
+          description: Plan oluşturuldu
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: "#/components/schemas/MealPlan"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /meal-plans/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string }
+
+    put:
+      tags: [Meal Plans]
+      summary: Yemek planını günceller (giriş + sahiplik gerekli).
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MealPlanCreateRequest"
+      responses:
+        "200":
+          description: Plan güncellendi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: "#/components/schemas/MealPlan"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags: [Meal Plans]
+      summary: Yemek planını siler (giriş + sahiplik gerekli).
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Plan silindi
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+# ──────────────────────────────────────────
+# COMPONENTS
+# ──────────────────────────────────────────
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # ── Request Schemas ───────────────────
+    RegisterRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name: { type: string, example: "Mehmet Furkan" }
+        email: { type: string, format: email, example: "mehmet@nightcodekitchen.com" }
+        password: { type: string, minLength: 6, example: "Abc123!" }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+
+    RecipeCreateRequest:
+      type: object
+      required: [title, ingredients, instructions]
+      properties:
+        title: { type: string, example: "Menemen" }
+        ingredients:
+          type: array
+          items: { type: string }
+          minItems: 1
+          example: ["Domates", "Biber", "Yumurta"]
+        instructions: { type: string, example: "Zeytinyağını ısıtın..." }
+        prepTime: { type: integer, example: 20 }
+
+    RecommendationRequest:
+      type: object
+      required: [ingredients]
+      properties:
+        ingredients:
+          type: array
+          items: { type: string }
+          minItems: 1
+          example: ["domates", "biber", "yumurta"]
+
+    MealPlanCreateRequest:
+      type: object
+      required: [date, meals]
+      properties:
+        date: { type: string, format: date }
+        meals:
+          type: array
+          items:
+            type: object
+            required: [type, recipeId]
+            properties:
+              type:
+                type: string
+                enum: ["Kahvaltı", "Öğle Yemeği", "Akşam Yemeği", "Atıştırmalık"]
+              recipeId: { type: string }
+
+    # ── Data Schemas ──────────────────────
+    User:
+      type: object
+      properties:
+        _id: { type: string }
+        name: { type: string }
+        email: { type: string, format: email }
+        preferences:
+          type: object
+          properties:
+            diet:
+              type: array
+              items:
+                type: string
+                enum: [Vegan, Vejetaryen, Keto, Glutensiz, Laktozsuz]
+            allergies:
+              type: array
+              items: { type: string }
+        favorites:
+          type: array
+          items: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    Recipe:
+      type: object
+      properties:
+        _id: { type: string }
+        title: { type: string }
+        ingredients:
+          type: array
+          items: { type: string }
+        instructions: { type: string }
+        prepTime: { type: integer }
+        author:
+          type: object
+          properties:
+            _id: { type: string }
+            name: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    MealPlan:
+      type: object
+      properties:
+        _id: { type: string }
+        user: { type: string }
+        date: { type: string, format: date }
+        meals:
+          type: array
+          items:
+            type: object
+            properties:
+              type: { type: string }
+              recipe:
+                $ref: "#/components/schemas/Recipe"
+        createdAt: { type: string, format: date-time }
+
+    AuthResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        data:
+          type: object
+          properties:
+            _id: { type: string }
+            name: { type: string }
+            email: { type: string }
+            preferences: { type: object }
+            token: { type: string }
+
+    RecommendationResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        count: { type: integer }
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              recipe:
+                $ref: "#/components/schemas/Recipe"
+              score:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: "Eşleşme oranı (0 = hiç eşleşme yok, 1 = tam eşleşme)"
+              missingIngredients:
+                type: array
+                items: { type: string }
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Bir hata oluştu"
+        stack:
+          type: string
+          description: Sadece development ortamında döner
+
+  # ── Reusable Responses ──────────────────
+  responses:
+    ValidationError:
+      description: Geçersiz veya eksik veri
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: "Tarif adı zorunludur"
+
+    Unauthorized:
+      description: Kimlik doğrulama gerekli
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: "Yetkilendirme başarısız, token bulunamadı"
+
+    Forbidden:
+      description: Yetkisiz erişim
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: "Bu işlem için yetkiniz yok"
+
+    NotFound:
+      description: Kaynak bulunamadı
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: "Kaynak bulunamadı"
+
+    ServerError:
+      description: Sunucu hatası
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: "Sunucu hatası"

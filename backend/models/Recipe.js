@@ -6,62 +6,26 @@ const RecipeSchema = new mongoose.Schema(
       type: String,
       required: [true, "Tarif adı zorunludur"],
       trim: true,
-      maxlength: [100, "Tarif adı en fazla 100 karakter olabilir"],
     },
-    description: {
-      type: String,
-      required: [true, "Tarif açıklaması zorunludur"],
-      maxlength: [500, "Açıklama en fazla 500 karakter olabilir"],
-    },
-    ingredients: [
-      {
-        name: {
-          type: String,
-          required: [true, "Malzeme adı zorunludur"],
-          trim: true,
-        },
-        amount: {
-          type: String,
-          required: [true, "Malzeme miktarı zorunludur"],
-        },
-        optional: {
-          type: Boolean,
-          default: false,
-        },
-      },
-    ],
-    instructions: {
+    ingredients: {
       type: [String],
-      required: [true, "Hazırlanış adımları zorunludur"],
+      required: [true, "Malzeme listesi zorunludur"],
       validate: {
         validator: function (val) {
           return val.length > 0;
         },
-        message: "En az bir hazırlanış adımı girilmelidir",
+        message: "En az bir malzeme girilmelidir",
       },
+    },
+    instructions: {
+      type: String,
+      required: [true, "Hazırlanış açıklaması zorunludur"],
     },
     prepTime: {
       type: Number,
-      required: [true, "Hazırlama süresi zorunludur"],
-      min: [1, "Hazırlama süresi en az 1 dakika olmalıdır"],
+      default: 0,
     },
-    difficulty: {
-      type: String,
-      enum: {
-        values: ["Kolay", "Orta", "Zor"],
-        message: "Zorluk seviyesi Kolay, Orta veya Zor olmalıdır",
-      },
-      default: "Orta",
-    },
-    tags: {
-      type: [String],
-      default: [],
-    },
-    imageUrl: {
-      type: String,
-      default: "",
-    },
-    createdBy: {
+    author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -71,10 +35,5 @@ const RecipeSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
-// --- İndeksler: Malzeme bazlı hızlı arama için ---
-RecipeSchema.index({ "ingredients.name": 1 });
-RecipeSchema.index({ tags: 1 });
-RecipeSchema.index({ title: "text", description: "text" });
 
 module.exports = mongoose.model("Recipe", RecipeSchema);
