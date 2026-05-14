@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  # --- MongoDB ---
+  mongo:
+    image: mongo:7
+    container_name: nck-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-nightcodekitchen}
+
+  # --- Backend API ---
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nck-backend
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    depends_on:
+      - mongo
+    env_file:
+      - ./backend/.env
+    environment:
+      # In-container hostname override so backend can reach mongo by service name.
+      # Tum diger gizli ayarlar (JWT_SECRET, CLIENT_URL vb.) backend/.env dosyasindan gelir.
+      MONGO_URI: mongodb://mongo:27017/${MONGO_INITDB_DATABASE:-nightcodekitchen}
+
+  # --- Client (React + Vite, production build served by `serve`) ---
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: nck-client
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:5001/api}
+
+volumes:
+  mongo_data:
