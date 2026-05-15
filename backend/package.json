@@ -1,0 +1,25 @@
+{
+  "name": "ymt-akilli-yemek-backend",
+  "version": "1.0.0",
+  "description": "YMT Akıllı Yemek - Backend API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "seed": "ts-node scripts/seed.ts"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5",
+    "@types/node": "^20.14.0",
+    "@types/bcryptjs": "^2.4.6"
+  }
+}
