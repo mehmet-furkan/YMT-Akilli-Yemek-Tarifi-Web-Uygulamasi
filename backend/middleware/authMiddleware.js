@@ -19,18 +19,18 @@ const protect = async (req, res, next) => {
       // Kullanıcıyı bul ve request nesnesine ekle (şifre hariç)
       req.user = await User.findById(decoded.id).select("-password");
 
-      next();
+      return next(); // İşlem başarılıysa sonraki adıma geç ve fonksiyonu bitir
     } catch (error) {
       console.error("Token doğrulama hatası:", error.message);
-      res.status(401).json({
+      // Hata durumunda işlemi bitir
+      return res.status(401).json({
         success: false,
         message: "Yetkilendirme başarısız, geçersiz token",
       });
     }
-  }
-
-  else {
-    res.status(401).json({
+  } else {
+    // Token hiç yoksa işlemi bitir
+    return res.status(401).json({
       success: false,
       message: "Yetkilendirme başarısız, token bulunamadı",
     });
