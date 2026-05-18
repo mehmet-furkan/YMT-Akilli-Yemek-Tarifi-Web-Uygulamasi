@@ -579,16 +579,42 @@ components:
 
     RecipeCreateRequest:
       type: object
-      required: [title, ingredients, instructions]
+      required: [title, description, ingredients, instructions, cookTime, category]
       properties:
         title: { type: string, example: "Menemen" }
+        description: { type: string, maxLength: 500, example: "Klasik Türk kahvaltısı." }
         ingredients:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [name, amount]
+            properties:
+              name: { type: string, example: "domates" }
+              amount: { type: string, example: "3" }
+              unit: { type: string, example: "adet" }
+              optional: { type: boolean, default: false }
+        instructions:
           type: array
           items: { type: string }
           minItems: 1
-          example: ["Domates", "Biber", "Yumurta"]
-        instructions: { type: string, example: "Zeytinyağını ısıtın..." }
-        prepTime: { type: integer, example: 20 }
+          example: ["Domatesleri küp doğra.", "Yumurtaları kır, karıştırarak pişir."]
+        cookTime: { type: integer, minimum: 1, example: 15, description: "Pişirme süresi (dakika)" }
+        prepTime: { type: integer, default: 0, example: 5, description: "Ön hazırlık süresi (dakika)" }
+        servings: { type: integer, minimum: 1, default: 4, example: 2 }
+        category:
+          type: string
+          enum: ["Kahvaltı", "Çorba", "Ana Yemek", "Salata", "Tatlı", "İçecek", "Atıştırmalık"]
+          example: "Kahvaltı"
+        difficulty:
+          type: string
+          enum: ["Kolay", "Orta", "Zor"]
+          default: "Orta"
+        tags:
+          type: array
+          items: { type: string }
+          example: ["kahvaltı", "yumurta"]
+        imageUrl: { type: string, example: "" }
 
     RecommendationRequest:
       type: object
@@ -644,12 +670,33 @@ components:
       properties:
         _id: { type: string }
         title: { type: string }
+        description: { type: string }
         ingredients:
           type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              amount: { type: string }
+              unit: { type: string }
+              optional: { type: boolean }
+        instructions:
+          type: array
           items: { type: string }
-        instructions: { type: string }
-        prepTime: { type: integer }
-        author:
+        cookTime: { type: integer, description: "Pişirme süresi (dakika)" }
+        prepTime: { type: integer, description: "Ön hazırlık süresi (dakika)" }
+        servings: { type: integer }
+        category:
+          type: string
+          enum: ["Kahvaltı", "Çorba", "Ana Yemek", "Salata", "Tatlı", "İçecek", "Atıştırmalık"]
+        difficulty:
+          type: string
+          enum: ["Kolay", "Orta", "Zor"]
+        tags:
+          type: array
+          items: { type: string }
+        imageUrl: { type: string }
+        createdBy:
           type: object
           properties:
             _id: { type: string }
