@@ -1,5 +1,9 @@
 const mongoose = require("mongoose");
 
+/**
+ * Recipe (Tarif) Modeli
+ * Uygulamanın ana içeriği. Arama ve öneri motoru bu modeli kullanır.
+ */
 const RecipeSchema = new mongoose.Schema(
   {
     title: {
@@ -24,6 +28,10 @@ const RecipeSchema = new mongoose.Schema(
           type: String,
           required: [true, "Malzeme miktarı zorunludur"],
         },
+        unit: {
+          type: String,
+          default: "", // örn: "gram", "adet", "yemek kaşığı"
+        },
         optional: {
           type: Boolean,
           default: false,
@@ -40,10 +48,29 @@ const RecipeSchema = new mongoose.Schema(
         message: "En az bir hazırlanış adımı girilmelidir",
       },
     },
+    // Hazırlama süresi (dakika) — öneri motoru ve filtreleme için kritik
+    cookTime: {
+      type: Number,
+      required: [true, "Pişirme süresi zorunludur"],
+      min: [1, "Pişirme süresi en az 1 dakika olmalıdır"],
+    },
     prepTime: {
       type: Number,
-      required: [true, "Hazırlama süresi zorunludur"],
-      min: [1, "Hazırlama süresi en az 1 dakika olmalıdır"],
+      default: 0, // Ön hazırlık süresi (opsiyonel)
+    },
+    servings: {
+      type: Number,
+      default: 4,
+      min: [1, "Porsiyon sayısı en az 1 olmalıdır"],
+    },
+    // Kategori — filtreleme için zorunlu
+    category: {
+      type: String,
+      required: [true, "Kategori zorunludur"],
+      enum: {
+        values: ["Kahvaltı", "Çorba", "Ana Yemek", "Salata", "Tatlı", "İçecek", "Atıştırmalık"],
+        message: "Geçersiz kategori",
+      },
     },
     difficulty: {
       type: String,
@@ -72,9 +99,15 @@ const RecipeSchema = new mongoose.Schema(
   }
 );
 
-// --- İndeksler: Malzeme bazlı hızlı arama için ---
-RecipeSchema.index({ "ingredients.name": 1 });
-RecipeSchema.index({ tags: 1 });
+// --- İndeksler ---
+// Metin araması: başlık ve açıklama üzerinde
 RecipeSchema.index({ title: "text", description: "text" });
+// Öneri motoru için malzeme araması
+RecipeSchema.index({ "ingredients.name": 1 });
+// Filtreleme için
+RecipeSchema.index({ category: 1 });
+RecipeSchema.index({ cookTime: 1 });
+RecipeSchema.index({ difficulty: 1 });
+RecipeSchema.index({ tags: 1 });
 
 module.exports = mongoose.model("Recipe", RecipeSchema);
