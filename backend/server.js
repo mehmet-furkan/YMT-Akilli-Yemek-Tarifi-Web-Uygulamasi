@@ -50,6 +50,9 @@ require("./config/swagger")(app);
 
 app.get("/", (req, res) => res.json({ status: "success", message: "Night Code Kitchen API Güvende!" }));
 
+// --- 💚 HEALTH CHECK ---
+app.get("/api/health", (req, res) => res.json({ status: "ok", message: "Night Code Kitchen API çalışıyor! 🚀" }));
+
 // Hata Yönetimi
 app.use(notFound);
 app.use(errorHandler);

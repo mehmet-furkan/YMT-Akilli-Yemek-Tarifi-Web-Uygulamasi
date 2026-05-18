@@ -1,0 +1,3 @@
+// Bu klasör paylaşılabilir React bileşenleri içindir.
+// Örnek: Navbar, Footer, Button, Modal vb.
+export {};

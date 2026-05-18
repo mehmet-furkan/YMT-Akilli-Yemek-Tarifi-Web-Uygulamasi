@@ -1,0 +1,3 @@
+// Bu klasör React Context Provider'ları içindir.
+// Örnek: AuthContext, ThemeContext vb.
+export {};
