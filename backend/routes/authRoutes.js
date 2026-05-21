@@ -1,7 +1,12 @@
 const express = require("express");
 const { body, validationResult } = require("express-validator");
 const router = express.Router();
-const { registerUser, authUser } = require("../controllers/authController");
+
+// getMe ve logoutUser fonksiyonlarını da import ediyoruz
+const { registerUser, authUser, getMe, logoutUser } = require("../controllers/authController");
+
+// Auth middleware'i import ediyoruz (middleware dosyasında fonksiyonun adını 'protect' yaptıysan bu şekilde kalabilir, farklıysa burayı güncellemelisin)
+const { protect } = require("../middleware/authMiddleware"); 
 
 const registerValidation = [
   body("name").notEmpty().withMessage("İsim alanı boş bırakılamaz"),
@@ -18,5 +23,9 @@ const registerValidation = [
 
 router.post("/register", registerValidation, registerUser);
 router.post("/login", authUser);
+
+// YENİ EKLENEN KORUMALI ROTALAR
+router.get("/me", protect, getMe); 
+router.post("/logout", logoutUser);
 
 module.exports = router;

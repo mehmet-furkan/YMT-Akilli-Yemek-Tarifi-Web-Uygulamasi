@@ -67,5 +67,36 @@ const authUser = async (req, res, next) => {
   }
 };
 
-// BURASI ÇOK ÖNEMLİ: İsimler rotadakiyle aynı oldu
-module.exports = { registerUser, authUser };
+// @desc    Mevcut kullanıcı bilgilerini getir (/auth/me)
+const getMe = async (req, res, next) => {
+  try {
+    // req.user.id, authMiddleware içinden gelecek
+    const user = await User.findById(req.user.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Kullanıcı bulunamadı" });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Kullanıcı çıkışı (/auth/logout)
+const logoutUser = async (req, res, next) => {
+  try {
+    res.status(200).json({
+      success: true,
+      message: "Başarıyla çıkış yapıldı",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// BURASI ÇOK ÖNEMLİ: Yeni fonksiyonları da dışa aktarıyoruz
+module.exports = { registerUser, authUser, getMe, logoutUser };
