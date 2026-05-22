@@ -44,6 +44,8 @@ app.use(cors({
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/recipes", require("./routes/recipes.routes"));
+app.use("/api/favorites", require("./routes/favorites.routes"));
+app.use("/api/recommendations", require("./routes/recommendations.routes"));
 
 // --- 📄 SWAGGER UI ---
 require("./config/swagger")(app);
