@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { RecipeCard, RecipeCardSkeleton } from '../components/feature/RecipeCard';
 import api from '../lib/axios';
@@ -10,15 +11,81 @@ async function fetchRecipes(): Promise<RecipeListResponse> {
 
 const SKELETON_COUNT = 8;
 
+// --- BULANIK ARAMA (FUZZY SEARCH) İÇİN MATEMATİKSEL ALGORİTMA ---
+function getEditDistance(a: string, b: string): number {
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+  const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
+  for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
+  for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
+  for (let j = 1; j <= b.length; j++) {
+    for (let i = 1; i <= a.length; i++) {
+      const indicator = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[j][i] = Math.min(
+        matrix[j][i - 1] + 1,
+        matrix[j - 1][i] + 1,
+        matrix[j - 1][i - 1] + indicator
+      );
+    }
+  }
+  return matrix[b.length][a.length];
+}
+
+// Kelimenin metin içinde geçip geçmediğini veya benzer olup olmadığını kontrol eder
+function isWordMatch(searchWord: string, text: string): boolean {
+  if (text.includes(searchWord)) return true; // Tam veya yarım kayıpsız eşleşme
+  
+  const textWords = text.split(/[\s,.-]+/);
+  // DİNAMİK HATA PAYI: 5 harf ve altına 1 hata, daha uzununa 2 hata toleransı
+  const allowedDistance = searchWord.length <= 5 ? 1 : 2;
+
+  for (const tWord of textWords) {
+    if (searchWord.length > 3) {
+      // 1. TAM KELİME KONTROLÜ (Örn: doyatek -> domates)
+      if (Math.abs(tWord.length - searchWord.length) <= allowedDistance) {
+        if (getEditDistance(searchWord, tWord) <= allowedDistance) return true; 
+      }
+      
+      // 2. YARIM KELİME KONTROLÜ (Örn: doyat -> domat)
+      if (tWord.length >= searchWord.length) {
+        const prefix = tWord.substring(0, searchWord.length);
+        if (getEditDistance(searchWord, prefix) <= allowedDistance) return true;
+      }
+    }
+  }
+  return false;
+}
+
 export default function HomePage() {
+  const [searchTerm, setSearchTerm] = useState('');
+
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['recipes'],
     queryFn: fetchRecipes,
   });
 
+  const filteredRecipes = data?.data.filter((recipe) => {
+    // 1. Türkçe karakterler (I->ı, İ->i) doğru küçülsün
+    const searchWords = searchTerm.toLocaleLowerCase('tr-TR').split(' ').filter(word => word.trim() !== '');
+    if (searchWords.length === 0) return true;
+
+    // 2. JSON'dan gelen metni birleştir
+    const rawText = [
+      recipe.title,
+      recipe.description,
+      recipe.ingredients ? JSON.stringify(recipe.ingredients) : ''
+    ].join(' ');
+
+    // 3. Tırnakları ve parantezleri sil, ardından Türkçe küçült
+    const searchableText = rawText
+      .toLocaleLowerCase('tr-TR')
+      .replace(/[\[\]"'{}]/g, ' '); 
+
+    return searchWords.every(word => isWordMatch(word, searchableText));
+  });
+
   return (
     <main className="min-h-screen bg-stone-50">
-      {/* Hero */}
       <section className="bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 px-4 py-12 sm:py-16 text-center">
         <p className="text-amber-600 text-sm font-medium tracking-widest uppercase mb-3">
           Night Code Kitchen
@@ -30,20 +97,23 @@ export default function HomePage() {
           Elindeki malzemeleri gir, sana en uygun tarifleri bulalım.
         </p>
 
-        {/* Search bar — placeholder, arama özelliği ile genişletilecek */}
         <div className="mt-6 max-w-md mx-auto flex gap-2">
           <input
             type="search"
-            placeholder="Tarif veya malzeme ara..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Örn: domates soğak tereyağı..."
             className="flex-1 bg-white border border-amber-200 rounded-full px-4 py-2.5 text-sm text-stone-700 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-300 shadow-sm"
           />
-          <button className="bg-amber-500 hover:bg-amber-600 text-white font-medium text-sm px-5 py-2.5 rounded-full transition-colors shadow-sm">
+          <button 
+            type="button"
+            className="bg-amber-500 hover:bg-amber-600 text-white font-medium text-sm px-5 py-2.5 rounded-full transition-colors shadow-sm"
+          >
             Ara
           </button>
         </div>
       </section>
 
-      {/* Recipe grid */}
       <section className="max-w-5xl mx-auto px-4 py-10">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-stone-800">
@@ -51,11 +121,10 @@ export default function HomePage() {
               ? 'Tarifler yükleniyor…'
               : isError
               ? 'Tarifler'
-              : `Tüm Tarifler ${data?.count ? `(${data.count})` : ''}`}
+              : `Tüm Tarifler (${filteredRecipes?.length || 0})`}
           </h2>
         </div>
 
-        {/* Error state */}
         {isError && (
           <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-xl px-5 py-4 text-sm">
             <strong>Bir hata oluştu:</strong>{' '}
@@ -65,26 +134,20 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {isLoading
             ? Array.from({ length: SKELETON_COUNT }).map((_, i) => (
                 <RecipeCardSkeleton key={i} />
               ))
-            : data?.data.map((recipe) => (
+            : filteredRecipes?.map((recipe) => (
                 <RecipeCard key={recipe._id} recipe={recipe} />
               ))}
         </div>
 
-        {/* Empty state */}
-        {!isLoading && !isError && data?.data.length === 0 && (
+        {!isLoading && !isError && filteredRecipes?.length === 0 && (
           <div className="text-center py-16 text-stone-400">
             <span className="text-5xl block mb-4" aria-hidden="true">🥄</span>
-            <p className="text-base font-medium text-stone-600">Henüz tarif yok.</p>
-            <p className="text-sm mt-1">
-              Backend'de <code className="bg-stone-100 px-1 rounded">npm run seed</code> komutunu
-              çalıştırarak örnek tarifleri ekleyebilirsin.
-            </p>
+            <p className="text-base font-medium text-stone-600">Aradığın malzemelere uygun tarif bulunamadı.</p>
           </div>
         )}
       </section>
