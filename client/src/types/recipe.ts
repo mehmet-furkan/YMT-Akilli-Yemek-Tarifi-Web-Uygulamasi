@@ -50,15 +50,6 @@ export interface RecipeListResponse {  // Emre'nin eklediği, silinmesin
   data: Recipe[];
 }
 
-// ─── Favorites ───────────────────────────────────────────────────────────────
-
-export interface Favorite {
-  _id: string;
-  userId: string;
-  recipeId: Recipe;   // populate edilmiş gelecek
-  createdAt: string;
-}
-
 // ─── Recommendations ─────────────────────────────────────────────────────────
 
 export interface RecommendationResult {
