@@ -106,7 +106,7 @@ export default function RecipeDetailPage() {
           {/* Stats row */}
           <div className="flex flex-wrap gap-5 py-4 border-y border-stone-100 mb-6 text-sm">
             <Stat icon="⏱️" label="Toplam Süre" value={`${totalTime} dk`} />
-            {recipe.prepTime > 0 && (
+            {(recipe.prepTime ?? 0) > 0 && (
               <Stat icon="🔪" label="Hazırlık" value={`${recipe.prepTime} dk`} />
             )}
             <Stat icon="🍳" label="Pişirme" value={`${recipe.cookTime} dk`} />
@@ -163,7 +163,7 @@ export default function RecipeDetailPage() {
           </div>
 
           {/* Tags */}
-          {recipe.tags.length > 0 && (
+          {recipe.tags && recipe.tags.length > 0 && (
             <div className="mt-6 flex flex-wrap gap-2">
               {recipe.tags.map((tag) => (
                 <span

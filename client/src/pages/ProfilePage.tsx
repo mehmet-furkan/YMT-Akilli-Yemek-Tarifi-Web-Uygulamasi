@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { useFavorites } from "../hooks/useFavorites";
+import { RecipeCard } from "../components/feature/RecipeCard";
 
 // ─── Diyet seçenekleri (User şemasıyla birebir) ───────────────────────────
 
