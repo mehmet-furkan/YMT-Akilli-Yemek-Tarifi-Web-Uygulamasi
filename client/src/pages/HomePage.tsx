@@ -1,17 +1,24 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { RecipeCard, RecipeCardSkeleton } from '../components/feature/RecipeCard';
 import { useFavorites } from '../hooks/useFavorites';
 import api from '../lib/axios';
 import type { RecipeListResponse } from '../types/recipe';
 
+// Backend's `?limit` is hard-capped at 100 in recipes.controller.js. We send
+// the max so HomePage can do client-side filtering (search + category) over
+// the full corpus without pagination round-trips. Bump this once the corpus
+// outgrows 100 recipes and add real pagination.
+const RECIPES_PAGE_LIMIT = 100;
+const SKELETON_COUNT = 8;
+
 async function fetchRecipes(): Promise<RecipeListResponse> {
-  const { data } = await api.get<RecipeListResponse>('/recipes');
+  const { data } = await api.get<RecipeListResponse>('/recipes', {
+    params: { limit: RECIPES_PAGE_LIMIT },
+  });
   return data;
 }
-
-const SKELETON_COUNT = 8;
 
 // --- BULANIK ARAMA (FUZZY SEARCH) İÇİN MATEMATİKSEL ALGORİTMA ---
 function getEditDistance(a: string, b: string): number {
@@ -36,7 +43,7 @@ function getEditDistance(a: string, b: string): number {
 // Kelimenin metin içinde geçip geçmediğini veya benzer olup olmadığını kontrol eder
 function isWordMatch(searchWord: string, text: string): boolean {
   if (text.includes(searchWord)) return true; // Tam veya yarım kayıpsız eşleşme
-  
+
   const textWords = text.split(/[\s,.-]+/);
   // DİNAMİK HATA PAYI: 5 harf ve altına 1 hata, daha uzununa 2 hata toleransı
   const allowedDistance = searchWord.length <= 5 ? 1 : 2;
@@ -45,9 +52,9 @@ function isWordMatch(searchWord: string, text: string): boolean {
     if (searchWord.length > 3) {
       // 1. TAM KELİME KONTROLÜ (Örn: doyatek -> domates)
       if (Math.abs(tWord.length - searchWord.length) <= allowedDistance) {
-        if (getEditDistance(searchWord, tWord) <= allowedDistance) return true; 
+        if (getEditDistance(searchWord, tWord) <= allowedDistance) return true;
       }
-      
+
       // 2. YARIM KELİME KONTROLÜ (Örn: doyat -> domat)
       if (tWord.length >= searchWord.length) {
         const prefix = tWord.substring(0, searchWord.length);
@@ -60,6 +67,9 @@ function isWordMatch(searchWord: string, text: string): boolean {
 
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedCategory = searchParams.get('category');
+
   const [randomLoading, setRandomLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -81,7 +91,7 @@ export default function HomePage() {
   };
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['recipes'],
+    queryKey: ['recipes', RECIPES_PAGE_LIMIT],
     queryFn: fetchRecipes,
   });
 
@@ -89,26 +99,42 @@ export default function HomePage() {
   const { favorites } = useFavorites();
   const favoriteCount = favorites.length;
 
-  // Fuzzy search: filter the recipe list client-side based on title,
-  // description and ingredients with Levenshtein-based tolerance.
+  const clearCategory = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('category');
+    setSearchParams(next, { replace: true });
+  };
+
+  // Fuzzy search + category filter: filter the recipe list client-side based
+  // on title, description and ingredients with Levenshtein-based tolerance,
+  // then apply the URL-driven category filter.
+
   const filteredRecipes = data?.data.filter((recipe) => {
-    // 1. Türkçe karakterler (I->ı, İ->i) doğru küçülsün
-    const searchWords = searchTerm.toLocaleLowerCase('tr-TR').split(' ').filter(word => word.trim() !== '');
+    // 1. Kategori filtresi (URL'den gelir)
+    if (selectedCategory && recipe.category !== selectedCategory) {
+      return false;
+    }
+
+    // 2. Türkçe karakterli (I->ı, İ->i) küçük harf çevirisi
+    const searchWords = searchTerm
+      .toLocaleLowerCase('tr-TR')
+      .split(' ')
+      .filter((word) => word.trim() !== '');
     if (searchWords.length === 0) return true;
 
-    // 2. JSON'dan gelen metni birleştir
+    // 3. Aranabilir metni birleştir (başlık + açıklama + malzemeler)
     const rawText = [
       recipe.title,
       recipe.description,
-      recipe.ingredients ? JSON.stringify(recipe.ingredients) : ''
+      recipe.ingredients ? JSON.stringify(recipe.ingredients) : '',
     ].join(' ');
 
-    // 3. Tırnakları ve parantezleri sil, ardından Türkçe küçült
+    // 4. Tırnakları, parantezleri sil, ardından Türkçe küçült
     const searchableText = rawText
       .toLocaleLowerCase('tr-TR')
       .replace(/[\[\]"'{}]/g, ' ');
 
-    return searchWords.every(word => isWordMatch(word, searchableText));
+    return searchWords.every((word) => isWordMatch(word, searchableText));
   });
 
   return (
@@ -155,10 +181,10 @@ export default function HomePage() {
             type="search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Örn: domates soğak tereyağı..."
+            placeholder="Örn: domates soğan tereyağı..."
             className="flex-1 bg-white border border-amber-200 rounded-full px-4 py-2.5 text-sm text-stone-700 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-300 shadow-sm"
           />
-          <button 
+          <button
             type="button"
             className="bg-amber-500 hover:bg-amber-600 text-white font-medium text-sm px-5 py-2.5 rounded-full transition-colors shadow-sm"
           >
@@ -213,12 +239,31 @@ export default function HomePage() {
       </section>
 
       <section className="max-w-5xl mx-auto px-4 py-10">
+        {/* Active category banner */}
+        {selectedCategory && (
+          <div className="mb-6 flex items-center justify-between gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
+            <p className="text-sm text-stone-700">
+              <span className="text-stone-500">Kategori:</span>{' '}
+              <span className="font-semibold text-amber-700">{selectedCategory}</span>
+            </p>
+            <button
+              type="button"
+              onClick={clearCategory}
+              className="text-xs font-medium text-amber-700 hover:text-amber-900 underline underline-offset-2"
+            >
+              Tüm tarifleri göster
+            </button>
+          </div>
+        )}
+
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-stone-800">
             {isLoading
               ? 'Tarifler yükleniyor…'
               : isError
               ? 'Tarifler'
+              : selectedCategory
+              ? `${selectedCategory} (${filteredRecipes?.length || 0})`
               : `Tüm Tarifler (${filteredRecipes?.length || 0})`}
           </h2>
         </div>
@@ -245,7 +290,19 @@ export default function HomePage() {
         {!isLoading && !isError && filteredRecipes?.length === 0 && (
           <div className="text-center py-16 text-stone-400">
             <span className="text-5xl block mb-4" aria-hidden="true">🥄</span>
-            <p className="text-base font-medium text-stone-600">Aradığın malzemelere uygun tarif bulunamadı.</p>
+            <p className="text-base font-medium text-stone-600">
+              {selectedCategory
+                ? `"${selectedCategory}" kategorisinde tarif bulunamadı.`
+                : 'Aradığın malzemelere uygun tarif bulunamadı.'}
+            </p>
+            {selectedCategory && (
+              <Link
+                to="/"
+                className="inline-block mt-4 text-sm text-amber-600 hover:text-amber-700 underline underline-offset-2"
+              >
+                Tüm tarifleri göster
+              </Link>
+            )}
           </div>
         )}
       </section>

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { Recipe } from '../../types/recipe';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useAuth } from '../../hooks/useAuth';
@@ -93,6 +93,36 @@ function FavoriteButton({ recipeId }: FavoriteButtonProps) {
   );
 }
 
+// ── CategoryButton ──────────────────────────────────────────────────────────
+// Kategori rozeti tıklandığında HomePage'e ?category=X URL'siyle gider.
+// Link içinde olduğu için preventDefault + stopPropagation pattern'i kullanılır
+// (FavoriteButton ile aynı yaklaşım).
+
+interface CategoryButtonProps {
+  category: string;
+}
+
+function CategoryButton({ category }: CategoryButtonProps) {
+  const navigate = useNavigate();
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/?category=${encodeURIComponent(category)}`);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      aria-label={`${category} kategorisindeki tarifleri göster`}
+      className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-amber-800 text-xs font-medium px-2.5 py-1 rounded-full border border-amber-100 hover:bg-amber-50 hover:border-amber-200 transition-colors cursor-pointer"
+    >
+      {category}
+    </button>
+  );
+}
+
 // ── RecipeCard ──────────────────────────────────────────────────────────────
 
 export function RecipeCard({ recipe }: RecipeCardProps) {
@@ -123,10 +153,8 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
           </div>
         )}
 
-        {/* Category badge */}
-        <span className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-amber-800 text-xs font-medium px-2.5 py-1 rounded-full border border-amber-100">
-          {recipe.category}
-        </span>
+        {/* Category badge — clickable, navigates to filtered HomePage */}
+        <CategoryButton category={recipe.category} />
 
         {/* Favorite button — sadece giriş yapılmışsa göster */}
         {isAuthenticated && <FavoriteButton recipeId={recipe._id} />}
