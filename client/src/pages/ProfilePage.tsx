@@ -118,40 +118,14 @@ function FavoritesTab() {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      {favorites.map((fav) => {
-        const recipe = fav.recipeId;
-        return (
-          <article
-            key={fav._id}
-            className="rounded-2xl bg-white border border-stone-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-          >
-            {recipe.imageUrl ? (
-              <img
-                src={recipe.imageUrl}
-                alt={recipe.title}
-                className="w-full h-36 object-cover"
-              />
-            ) : (
-              <div className="h-36 bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center">
-                <span className="text-4xl">🍳</span>
-              </div>
-            )}
-            <div className="p-3 space-y-1">
-              <h3 className="font-semibold text-stone-800 text-sm">
-                {recipe.title}
-              </h3>
-              <div className="flex gap-3 text-xs text-stone-400">
-                {recipe.cookTime && <span>⏱ {recipe.cookTime} dk</span>}
-                {recipe.difficulty && <span>{recipe.difficulty}</span>}
-                {recipe.category && <span>{recipe.category}</span>}
-              </div>
-            </div>
-          </article>
-        );
-      })}
+      {favorites.map((recipe) => (
+        <RecipeCard key={recipe._id} recipe={recipe} />
+      ))}
     </div>
   );
 }
+
+
 
 // ─── Yemek Planım sekmesi (v2 placeholder) ───────────────────────────────
 
