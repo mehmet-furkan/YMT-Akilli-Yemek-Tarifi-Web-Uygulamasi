@@ -68,10 +68,13 @@ export default function HomePage() {
     try {
       const { data } = await api.get('/recipes/random');
       if (data.success && data.data?._id) {
-        navigate(`/recipes/${data.data._id}`);
+        // Route is /tarifler/:id (Turkish) — see App.tsx
+        navigate(`/tarifler/${data.data._id}`);
       }
-    } catch {
-      // Hata durumunda sessizce kal
+    } catch (err) {
+      // CLAUDE.md: errors must not be silently swallowed.
+      // Surfacing via console.error until we wire a toast system.
+      console.error('Random recipe fetch failed:', err);
     } finally {
       setRandomLoading(false);
     }
