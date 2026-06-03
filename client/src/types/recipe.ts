@@ -1,11 +1,15 @@
-﻿// Night Code Kitchen — Recipe & API Types
+// Night Code Kitchen — Recipe & API Types
+
+// ─── Malzeme ────────────────────────────────────────────────────────────────
 
 export interface RecipeIngredient {
   name: string;
-  amount: string | number;
+  amount: string | number;  // Emre: number da gelebilir
   unit?: string;
   optional?: boolean;
 }
+
+// ─── Ana tarif ───────────────────────────────────────────────────────────────
 
 export interface Recipe {
   _id: string;
@@ -14,8 +18,8 @@ export interface Recipe {
   ingredients: RecipeIngredient[];
   instructions: string[];
   cookTime: number;
-  prepTime: number;
-  servings: number;
+  prepTime?: number;          // opsiyonel: seed data'da olmayabilir
+  servings?: number;          // opsiyonel
   category:
     | 'Kahvaltı'
     | 'Çorba'
@@ -25,12 +29,14 @@ export interface Recipe {
     | 'İçecek'
     | 'Atıştırmalık';
   difficulty: 'Kolay' | 'Orta' | 'Zor';
-  tags: string[];
-  imageUrl: string;
+  tags?: string[];            // opsiyonel
+  imageUrl?: string;          // opsiyonel
   createdBy: string | { _id: string; name: string };
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
+
+// ─── API response wrapper ────────────────────────────────────────────────────
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -38,9 +44,21 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-export interface RecipeListResponse {
+export interface RecipeListResponse {  // Emre'nin eklediği, silinmesin
   success: boolean;
   count: number;
   data: Recipe[];
 }
 
+// ─── Recommendations ─────────────────────────────────────────────────────────
+
+export interface RecommendationResult {
+  recipe: Recipe;
+  score: number;               // 0-100
+  missingIngredients: string[];
+}
+
+export interface RecommendationResponse {
+  success: boolean;
+  data: RecommendationResult[];
+}
