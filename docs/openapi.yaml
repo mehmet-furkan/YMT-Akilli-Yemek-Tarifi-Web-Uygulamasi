@@ -226,6 +226,46 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /recipes/random:
+    get:
+      tags: [Recipes]
+      summary: Rastgele bir tarif döner.
+      description: "MongoDB $sample aggregation ile veritabanından rastgele 1 tarif seçer. Kimlik doğrulama gerektirmez."
+      operationId: getRandomRecipe
+      responses:
+        "200":
+          description: Rastgele seçilmiş tarif
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: "#/components/schemas/Recipe"
+              example:
+                success: true
+                data:
+                  _id: "664b..."
+                  title: "Menemen"
+                  description: "Klasik Türk kahvaltısı."
+                  ingredients:
+                    - { name: "Domates", amount: "3", unit: "adet" }
+                  instructions: ["Domatesleri küp doğra."]
+                  cookTime: 15
+                  category: "Kahvaltı"
+        "404":
+          description: Veritabanında hiç tarif yok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                message: "Henüz hiç tarif yok"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
   /recipes/{id}:
     parameters:
       - name: id

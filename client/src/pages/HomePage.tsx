@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { RecipeCard, RecipeCardSkeleton } from '../components/feature/RecipeCard';
 import { useFavorites } from '../hooks/useFavorites';
 import api from '../lib/axios';
@@ -69,6 +69,26 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedCategory = searchParams.get('category');
+
+  const [randomLoading, setRandomLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleRandomRecipe = async () => {
+    setRandomLoading(true);
+    try {
+      const { data } = await api.get('/recipes/random');
+      if (data.success && data.data?._id) {
+        // Route is /tarifler/:id (Turkish) — see App.tsx
+        navigate(`/tarifler/${data.data._id}`);
+      }
+    } catch (err) {
+      // CLAUDE.md: errors must not be silently swallowed.
+      // Surfacing via console.error until we wire a toast system.
+      console.error('Random recipe fetch failed:', err);
+    } finally {
+      setRandomLoading(false);
+    }
+  };
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['recipes', RECIPES_PAGE_LIMIT],
@@ -171,6 +191,51 @@ export default function HomePage() {
             Ara
           </button>
         </div>
+
+        {/* 🎲 Bugün ne pişirsem? — Şans Butonu */}
+        <div className="mt-5 flex justify-center">
+          <button
+            id="random-recipe-btn"
+            type="button"
+            onClick={handleRandomRecipe}
+            disabled={randomLoading}
+            className="group relative inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold text-sm sm:text-base px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-70 disabled:cursor-wait"
+            style={{ transformOrigin: 'center' }}
+            onMouseEnter={(e) => {
+              if (!randomLoading) {
+                e.currentTarget.style.animation = 'shake 0.4s ease-in-out';
+              }
+            }}
+            onAnimationEnd={(e) => {
+              e.currentTarget.style.animation = '';
+            }}
+          >
+            {randomLoading ? (
+              <>
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                <span>🍽️ Seçiyorum…</span>
+              </>
+            ) : (
+              <>
+                <span className="text-lg">🎲</span>
+                <span>Bugün ne pişirsem?</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Shake animation keyframes */}
+        <style>{`
+          @keyframes shake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-2deg); }
+            50% { transform: rotate(2deg); }
+            75% { transform: rotate(-1deg); }
+          }
+        `}</style>
       </section>
 
       <section className="max-w-5xl mx-auto px-4 py-10">
