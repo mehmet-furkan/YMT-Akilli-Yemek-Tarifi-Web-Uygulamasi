@@ -4,6 +4,7 @@ const router = express.Router();
 const {
   getRecipes,
   getRecipeById,
+  getRandomRecipe,
   createRecipe,
   updateRecipe,
   deleteRecipe,
@@ -21,6 +22,10 @@ const {
 // POST — Malzemelere göre tarif ara, eşleşme skoruyla (Public)
 // NOT: "/:id" route'undan ÖNCE tanımlı olmalı, aksi halde :id yakalar.
 router.post("/search-by-ingredients", searchByIngredients);
+
+// ── /api/recipes/random ───────────────────────
+// GET — Rastgele 1 tarif döner (Public)
+router.get("/random", getRandomRecipe);
 
 // ── /api/recipes ──────────────────────────────
 // GET    — Tarifleri listele (Public)

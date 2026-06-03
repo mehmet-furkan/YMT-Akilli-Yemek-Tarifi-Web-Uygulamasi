@@ -154,6 +154,23 @@ const deleteRecipe = asyncHandler(async (req, res) => {
 });
 
 // ─────────────────────────────────────────────
+// GET /api/recipes/random
+// Rastgele 1 tarif döner — $sample aggregation
+// ─────────────────────────────────────────────
+const getRandomRecipe = asyncHandler(async (req, res) => {
+  const [recipe] = await Recipe.aggregate([
+    { $sample: { size: 1 } },
+  ]);
+
+  if (!recipe) {
+    res.status(404);
+    throw new Error("Henüz hiç tarif yok");
+  }
+
+  res.json({ success: true, data: recipe });
+});
+
+// ─────────────────────────────────────────────
 // POST /api/recipes/search-by-ingredients
 // Malzemelere göre tarif ara — eşleşme skoruyla (Public)
 // ─────────────────────────────────────────────
@@ -208,6 +225,7 @@ const searchByIngredients = asyncHandler(async (req, res) => {
 module.exports = {
   getRecipes,
   getRecipeById,
+  getRandomRecipe,
   createRecipe,
   updateRecipe,
   deleteRecipe,
