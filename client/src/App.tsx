@@ -7,6 +7,7 @@ import IngredientSearchPage from "./pages/IngredientSearchPage";
 import RecipeDetailPage from "./pages/RecipeDetailPage";
 import ProfilePage from "./pages/ProfilePage";
 import RecommendationPage from "./pages/RecommendationPage";
+import FavoritesPage from "./pages/FavoritesPage";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/search-by-ingredients" element={<IngredientSearchPage />} />
         <Route path="/tarifler/:id" element={<RecipeDetailPage />} />
         <Route path="/profil" element={<ProfilePage />} />
+        <Route path="/favoriler" element={<FavoritesPage />} />
       </Route>
 
       {/* ── Tanımsız rotalar → ana sayfaya yönlendir ────────────────── */}
