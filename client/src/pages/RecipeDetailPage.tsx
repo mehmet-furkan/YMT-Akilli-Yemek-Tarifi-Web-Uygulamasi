@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../lib/axios';
-import type { ApiResponse, Recipe } from '../types/recipe';
+import type { ApiResponse, Recipe, RecipeNutrition } from '../types/recipe';
 
 async function fetchRecipe(id: string): Promise<Recipe> {
   const { data } = await api.get<ApiResponse<Recipe>>(`/recipes/${id}`);
@@ -110,14 +111,22 @@ export default function RecipeDetailPage() {
             )}
 
             {/* Stats row */}
-            <div className="flex flex-wrap gap-5 py-4 border-y border-stone-100 mb-6 text-sm">
+            <div className="flex flex-wrap gap-5 py-4 border-y border-stone-100 mb-4 text-sm">
               <Stat icon="⏱️" label="Toplam Süre" value={`${totalTime} dk`} />
               {(recipe.prepTime ?? 0) > 0 && (
                 <Stat icon="🔪" label="Hazırlık" value={`${recipe.prepTime} dk`} />
               )}
               <Stat icon="🍳" label="Pişirme" value={`${recipe.cookTime} dk`} />
-              <Stat icon="👥" label="Kişi" value={`${recipe.servings}`} />
+              <Stat icon="👥" label="Kişi" value={`${recipe.servings ?? 1}`} />
+              {recipe.nutrition?.calories != null && (
+                <Stat icon="🔥" label="Kcal/Porsiyon" value={`≈ ${recipe.nutrition.calories} kcal`} />
+              )}
             </div>
+
+            {/* Besin değerleri akordionu — sadece veri varsa göster */}
+            {recipe.nutrition && (
+              <NutritionAccordion nutrition={recipe.nutrition} />
+            )}
 
             {/* Two-column layout on sm+ */}
             <div className="grid sm:grid-cols-2 gap-8">
@@ -196,6 +205,106 @@ function Stat({ icon, label, value }: { icon: string; label: string; value: stri
       <span className="text-lg" aria-hidden="true">{icon}</span>
       <span className="font-semibold text-stone-800">{value}</span>
       <span className="text-xs text-stone-400">{label}</span>
+    </div>
+  );
+}
+
+// Açılır-kapanır besin değerleri tablosu (C.1 — Zehra)
+// multiplier prop'u: Furkan Y.'nin B.4 porsiyon çarpanı göreviyle koordineli
+function NutritionAccordion({
+  nutrition,
+  multiplier = 1,
+}: {
+  nutrition: RecipeNutrition;
+  multiplier?: number;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const scaled = (val?: number) =>
+    val != null ? Math.round(val * multiplier) : null;
+
+  const rows: { label: string; value: number | null; unit: string; color: string }[] = [
+    { label: 'Protein',       value: scaled(nutrition.protein),  unit: 'g', color: 'bg-blue-400'   },
+    { label: 'Karbonhidrat',  value: scaled(nutrition.carbs),    unit: 'g', color: 'bg-amber-400'  },
+    { label: 'Yağ',           value: scaled(nutrition.fat),      unit: 'g', color: 'bg-rose-400'   },
+  ].filter((r) => r.value != null);
+
+  if (rows.length === 0) return null;
+
+  return (
+    <div className="mb-6 rounded-xl border border-stone-100 overflow-hidden">
+      {/* Akordion başlık */}
+      <button
+        id="nutrition-accordion-toggle"
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        aria-expanded={open}
+        aria-controls="nutrition-accordion-body"
+        className="w-full flex items-center justify-between px-4 py-3 bg-stone-50 hover:bg-amber-50 transition-colors text-sm font-medium text-stone-700"
+      >
+        <span className="flex items-center gap-2">
+          <span aria-hidden="true">📊</span>
+          Besin Değerleri
+          {nutrition.calories != null && (
+            <span className="text-xs font-normal text-stone-400">
+              (≈ {scaled(nutrition.calories)} kcal/porsiyon)
+            </span>
+          )}
+        </span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
+          className={`w-4 h-4 text-stone-400 transition-transform duration-200 ${
+            open ? 'rotate-180' : ''
+          }`}
+        >
+          <path
+            fillRule="evenodd"
+            d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06z"
+            clipRule="evenodd"
+          />
+        </svg>
+      </button>
+
+      {/* Akordion gövdesi */}
+      {open && (
+        <div
+          id="nutrition-accordion-body"
+          role="region"
+          aria-labelledby="nutrition-accordion-toggle"
+          className="px-4 py-4 bg-white"
+        >
+          <p className="text-xs text-stone-400 mb-3">
+            Tahmini değerler — porsiyon başı (1 kişilik)
+          </p>
+          <ul className="space-y-2.5">
+            {rows.map((row) => (
+              <li key={row.label} className="flex items-center gap-3 text-sm">
+                <span
+                  className={`w-2.5 h-2.5 rounded-full shrink-0 ${row.color}`}
+                  aria-hidden="true"
+                />
+                <span className="w-28 text-stone-600">{row.label}</span>
+                <div className="flex-1 bg-stone-100 rounded-full h-1.5 overflow-hidden">
+                  {/* Göstermek için sabit max: protein/karbonhidrat 100g, yağ 80g */}
+                  <div
+                    className={`h-full rounded-full ${row.color} opacity-70`}
+                    style={{
+                      width: `${Math.min(100, Math.round(((row.value ?? 0) / (row.label === 'Yağ' ? 80 : 100)) * 100))}%`,
+                    }}
+                    aria-hidden="true"
+                  />
+                </div>
+                <span className="font-semibold text-stone-800 w-14 text-right">
+                  {row.value} {row.unit}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
