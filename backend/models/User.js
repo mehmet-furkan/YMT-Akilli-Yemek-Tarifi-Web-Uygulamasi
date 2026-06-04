@@ -9,6 +9,47 @@ const UserSchema = new mongoose.Schema(
       trim: true,
       maxlength: [50, "Ad en fazla 50 karakter olabilir"],
     },
+    username: {
+      type: String,
+      unique: true,
+      sparse: true, // Existing users might not have a username, so sparse index allows nulls
+      trim: true,
+      lowercase: true,
+    },
+    profilePhoto: {
+      type: String,
+      default: "", // Varsayılan avatar fallback'i UI'da yapılacak
+    },
+    coverPhoto: {
+      type: String,
+      default: "", // Varsayılan kapak fotoğrafı fallback'i UI'da yapılacak
+    },
+    bio: {
+      type: String,
+      maxlength: [160, "Biyografi en fazla 160 karakter olabilir"],
+    },
+    city: {
+      type: String,
+    },
+    gender: {
+      type: String,
+      enum: ["Kadın", "Erkek", "Belirtmek İstemiyorum"],
+    },
+    birthDate: {
+      type: Date,
+    },
+    followersCount: {
+      type: Number,
+      default: 0,
+    },
+    followingCount: {
+      type: Number,
+      default: 0,
+    },
+    recipesCount: {
+      type: Number,
+      default: 0,
+    },
     email: {
       type: String,
       required: [true, "Lütfen e-posta adresinizi giriniz"],
@@ -29,7 +70,16 @@ const UserSchema = new mongoose.Schema(
     preferences: {
       diet: {
         type: [String],
-        enum: ["Vegan", "Vejetaryen", "Keto", "Glutensiz", "Laktozsuz"],
+        enum: [
+          "Vegan",
+          "Vejetaryen",
+          "Vejeteryan",
+          "Keto",
+          "Glutensiz",
+          "Laktozsuz",
+          "Helal",
+          "Düşük Karbonhidrat",
+        ],
         default: [],
       },
       allergies: {
@@ -38,6 +88,12 @@ const UserSchema = new mongoose.Schema(
       },
     },
     favorites: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Recipe",
+      },
+    ],
+    savedRecipes: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Recipe",

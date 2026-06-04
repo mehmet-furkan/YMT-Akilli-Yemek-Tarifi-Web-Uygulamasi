@@ -4,6 +4,7 @@ import type { RecommendationResponse } from "../types/recipe";
 
 interface RecommendationPayload {
   ingredients: string[];
+  dietaryPreferences?: string[];
 }
 
 async function fetchRecommendations(

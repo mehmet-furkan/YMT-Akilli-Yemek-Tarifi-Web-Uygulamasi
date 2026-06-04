@@ -42,7 +42,12 @@ function getEditDistance(a: string, b: string): number {
 
 // Kelimenin metin içinde geçip geçmediğini veya benzer olup olmadığını kontrol eder
 function isWordMatch(searchWord: string, text: string): boolean {
-  if (text.includes(searchWord)) return true; // Tam veya yarım kayıpsız eşleşme
+  // Türkçe karakter uyumlu kelime sınırı (word boundary)
+  // Sadece tam kelimeleri eşleştir (örneğin "et" araması "etsiz" veya "spagetti" ile eşleşmez)
+  const boundary = "[^a-zA-Z0-9çğıöşüÇĞIÖŞÜ]";
+  const exactRegex = new RegExp(`(^|${boundary})${searchWord}(${boundary}|$)`, "i");
+  
+  if (exactRegex.test(text)) return true; 
 
   const textWords = text.split(/[\s,.-]+/);
   // DİNAMİK HATA PAYI: 5 harf ve altına 1 hata, daha uzununa 2 hata toleransı
@@ -65,6 +70,17 @@ function isWordMatch(searchWord: string, text: string): boolean {
   return false;
 }
 
+const CATEGORIES = [
+  { id: 'Tümü', label: 'Tüm Tarifler' },
+  { id: 'Atıştırmalık', label: 'Atıştırmalıklar' },
+  { id: 'İçecek', label: 'İçecekler' },
+  { id: 'Tatlı', label: 'Tatlılar' },
+  { id: 'Çorba', label: 'Çorbalar' },
+  { id: 'Salata', label: 'Salatalar' },
+  { id: 'Ana Yemek', label: 'Ana Yemekler' },
+  { id: 'Kahvaltı', label: 'Kahvaltılıklar' },
+];
+
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
@@ -78,12 +94,9 @@ export default function HomePage() {
     try {
       const { data } = await api.get('/recipes/random');
       if (data.success && data.data?._id) {
-        // Route is /tarifler/:id (Turkish) — see App.tsx
         navigate(`/tarifler/${data.data._id}`);
       }
     } catch (err) {
-      // CLAUDE.md: errors must not be silently swallowed.
-      // Surfacing via console.error until we wire a toast system.
       console.error('Random recipe fetch failed:', err);
     } finally {
       setRandomLoading(false);
@@ -95,9 +108,18 @@ export default function HomePage() {
     queryFn: fetchRecipes,
   });
 
-  // Favorites: count badge on the top-right nav button
   const { favorites } = useFavorites();
   const favoriteCount = favorites.length;
+
+  const handleCategoryClick = (categoryId: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (categoryId === 'Tümü') {
+      next.delete('category');
+    } else {
+      next.set('category', categoryId);
+    }
+    setSearchParams(next, { replace: true });
+  };
 
   const clearCategory = () => {
     const next = new URLSearchParams(searchParams);
@@ -105,31 +127,23 @@ export default function HomePage() {
     setSearchParams(next, { replace: true });
   };
 
-  // Fuzzy search + category filter: filter the recipe list client-side based
-  // on title, description and ingredients with Levenshtein-based tolerance,
-  // then apply the URL-driven category filter.
-
   const filteredRecipes = data?.data.filter((recipe) => {
-    // 1. Kategori filtresi (URL'den gelir)
     if (selectedCategory && recipe.category !== selectedCategory) {
       return false;
     }
 
-    // 2. Türkçe karakterli (I->ı, İ->i) küçük harf çevirisi
     const searchWords = searchTerm
       .toLocaleLowerCase('tr-TR')
       .split(' ')
       .filter((word) => word.trim() !== '');
     if (searchWords.length === 0) return true;
 
-    // 3. Aranabilir metni birleştir (başlık + açıklama + malzemeler)
     const rawText = [
       recipe.title,
       recipe.description,
       recipe.ingredients ? JSON.stringify(recipe.ingredients) : '',
     ].join(' ');
 
-    // 4. Tırnakları, parantezleri sil, ardından Türkçe küçült
     const searchableText = rawText
       .toLocaleLowerCase('tr-TR')
       .replace(/[\[\]"'{}]/g, ' ');
@@ -139,10 +153,8 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-stone-50">
-      {/* Hero — `relative` so the Favorites nav button can be absolutely positioned */}
+      {/* Hero */}
       <section className="bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 px-4 py-12 sm:py-16 text-center relative">
-
-        {/* Favorilerim butonu — sağ üst köşe */}
         <Link
           id="nav-favorites-btn"
           to="/favoriler"
@@ -227,7 +239,6 @@ export default function HomePage() {
           </button>
         </div>
 
-        {/* Shake animation keyframes */}
         <style>{`
           @keyframes shake {
             0%, 100% { transform: rotate(0deg); }
@@ -238,73 +249,111 @@ export default function HomePage() {
         `}</style>
       </section>
 
-      <section className="max-w-5xl mx-auto px-4 py-10">
-        {/* Active category banner */}
-        {selectedCategory && (
-          <div className="mb-6 flex items-center justify-between gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
-            <p className="text-sm text-stone-700">
-              <span className="text-stone-500">Kategori:</span>{' '}
-              <span className="font-semibold text-amber-700">{selectedCategory}</span>
-            </p>
-            <button
-              type="button"
-              onClick={clearCategory}
-              className="text-xs font-medium text-amber-700 hover:text-amber-900 underline underline-offset-2"
-            >
-              Tüm tarifleri göster
-            </button>
+      {/* Main Content Area (Sidebar + Grid) */}
+      <section className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col lg:flex-row gap-8 xl:gap-12">
+        
+        {/* Sidebar */}
+        <aside className="w-full lg:w-64 flex-shrink-0">
+          <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-5 sticky top-6">
+            <h3 className="text-lg font-bold text-stone-800 mb-4 pb-2 border-b border-stone-100">
+              Kategoriler
+            </h3>
+            <ul className="space-y-1.5">
+              {CATEGORIES.map((category) => {
+                const isActive = (category.id === 'Tümü' && !selectedCategory) || (category.id === selectedCategory);
+                return (
+                  <li key={category.id}>
+                    <button
+                      onClick={() => handleCategoryClick(category.id)}
+                      className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-between ${
+                        isActive
+                          ? 'bg-amber-100 text-amber-900 shadow-sm'
+                          : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                      }`}
+                    >
+                      <span>{category.label}</span>
+                      {isActive && (
+                        <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
-        )}
+        </aside>
 
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-stone-800">
-            {isLoading
-              ? 'Tarifler yükleniyor…'
-              : isError
-              ? 'Tarifler'
-              : selectedCategory
-              ? `${selectedCategory} (${filteredRecipes?.length || 0})`
-              : `Tüm Tarifler (${filteredRecipes?.length || 0})`}
-          </h2>
-        </div>
-
-        {isError && (
-          <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-xl px-5 py-4 text-sm">
-            <strong>Bir hata oluştu:</strong>{' '}
-            {error instanceof Error
-              ? error.message
-              : 'Tarifler yüklenemedi. Lütfen tekrar deneyin.'}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {isLoading
-            ? Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-                <RecipeCardSkeleton key={i} />
-              ))
-            : filteredRecipes?.map((recipe) => (
-                <RecipeCard key={recipe._id} recipe={recipe} />
-              ))}
-        </div>
-
-        {!isLoading && !isError && filteredRecipes?.length === 0 && (
-          <div className="text-center py-16 text-stone-400">
-            <span className="text-5xl block mb-4" aria-hidden="true">🥄</span>
-            <p className="text-base font-medium text-stone-600">
-              {selectedCategory
-                ? `"${selectedCategory}" kategorisinde tarif bulunamadı.`
-                : 'Aradığın malzemelere uygun tarif bulunamadı.'}
-            </p>
-            {selectedCategory && (
-              <Link
-                to="/"
-                className="inline-block mt-4 text-sm text-amber-600 hover:text-amber-700 underline underline-offset-2"
+        {/* Recipe List */}
+        <div className="flex-1">
+          {/* Active category banner (optional now since sidebar highlights it, but kept for clarity) */}
+          {selectedCategory && (
+            <div className="mb-6 flex items-center justify-between gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 lg:hidden">
+              <p className="text-sm text-stone-700">
+                <span className="text-stone-500">Kategori:</span>{' '}
+                <span className="font-semibold text-amber-700">{selectedCategory}</span>
+              </p>
+              <button
+                type="button"
+                onClick={clearCategory}
+                className="text-xs font-medium text-amber-700 hover:text-amber-900 underline underline-offset-2"
               >
                 Tüm tarifleri göster
-              </Link>
-            )}
+              </button>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-stone-800">
+              {isLoading
+                ? 'Tarifler yükleniyor…'
+                : isError
+                ? 'Tarifler'
+                : selectedCategory
+                ? `${selectedCategory} (${filteredRecipes?.length || 0})`
+                : `Tüm Tarifler (${filteredRecipes?.length || 0})`}
+            </h2>
           </div>
-        )}
+
+          {isError && (
+            <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-xl px-5 py-4 text-sm mb-6">
+              <strong>Bir hata oluştu:</strong>{' '}
+              {error instanceof Error
+                ? error.message
+                : 'Tarifler yüklenemedi. Lütfen tekrar deneyin.'}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+            {isLoading
+              ? Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+                  <RecipeCardSkeleton key={i} />
+                ))
+              : filteredRecipes?.map((recipe) => (
+                  <RecipeCard key={recipe._id} recipe={recipe} />
+                ))}
+          </div>
+
+          {!isLoading && !isError && filteredRecipes?.length === 0 && (
+            <div className="text-center py-16 text-stone-400 bg-white rounded-3xl border border-stone-100 shadow-sm mt-4">
+              <span className="text-5xl block mb-4" aria-hidden="true">🥄</span>
+              <p className="text-base font-medium text-stone-600">
+                {selectedCategory
+                  ? `"${selectedCategory}" kategorisinde tarif bulunamadı.`
+                  : 'Aradığın kelimeye uygun tarif bulunamadı.'}
+              </p>
+              {selectedCategory && (
+                <button
+                  onClick={clearCategory}
+                  className="inline-block mt-4 text-sm font-medium text-amber-600 hover:text-amber-700 hover:underline underline-offset-2"
+                >
+                  Tüm tarifleri göster
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </section>
     </main>
   );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -10,8 +10,20 @@ import { useAuth } from '../../hooks/useAuth';
  */
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -61,34 +73,53 @@ export function Navbar() {
         {/* Desktop auth actions */}
         <div className="hidden md:flex items-center gap-3">
           {isAuthenticated ? (
-            <>
-              {user?.name && (
-                <span className="text-sm text-stone-500" aria-label="Giriş yapan kullanıcı">
-                  Merhaba,{' '}
-                  <span className="font-medium text-stone-700">
-                    {user.name.split(' ')[0]}
-                  </span>
-                </span>
-              )}
+            <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
-                onClick={handleLogout}
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-stone-600 hover:text-rose-600 transition-colors"
-                aria-label="Oturumu kapat"
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-2 focus:outline-none rounded-full ring-2 ring-transparent hover:ring-amber-200 transition-all"
+                aria-label="Profil Menüsü"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  className="w-4 h-4"
-                  aria-hidden="true"
-                >
-                  <path fillRule="evenodd" d="M3 4.25A2.25 2.25 0 0 1 5.25 2h5.5A2.25 2.25 0 0 1 13 4.25v2a.75.75 0 0 1-1.5 0v-2a.75.75 0 0 0-.75-.75h-5.5a.75.75 0 0 0-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 0 0 .75-.75v-2a.75.75 0 0 1 1.5 0v2A2.25 2.25 0 0 1 10.75 18h-5.5A2.25 2.25 0 0 1 3 15.75V4.25z" clipRule="evenodd" />
-                  <path fillRule="evenodd" d="M19 10a.75.75 0 0 0-.22-.53l-3.25-3.25a.75.75 0 1 0-1.06 1.06l1.97 1.97H8.75a.75.75 0 0 0 0 1.5h7.69l-1.97 1.97a.75.75 0 1 0 1.06 1.06l3.25-3.25A.75.75 0 0 0 19 10z" clipRule="evenodd" />
-                </svg>
-                Çıkış Yap
+                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 to-orange-400 flex items-center justify-center text-white font-bold shadow-sm">
+                  {user?.name?.[0]?.toUpperCase() ?? "?"}
+                </div>
               </button>
-            </>
+
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-white border border-stone-200 rounded-xl shadow-xl py-2 z-50 flex flex-col transform opacity-100 scale-100 transition-all origin-top-right">
+                  <div className="px-4 py-2 border-b border-stone-100 mb-1">
+                    <p className="text-sm font-bold text-stone-800 truncate">{user?.name}</p>
+                    <p className="text-xs text-stone-500 truncate">
+                      {user?.username ? `@${user.username}` : user?.email}
+                    </p>
+                  </div>
+                  <Link to="/profil" onClick={() => setDropdownOpen(false)} className="px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-amber-600 transition-colors flex items-center gap-2">
+                    Profilim
+                  </Link>
+                  <Link to="/profil?tab=favorites" onClick={() => setDropdownOpen(false)} className="px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-amber-600 transition-colors flex items-center gap-2">
+                    Tarif Defterim
+                  </Link>
+                  <Link to="/profil?tab=my-recipes" onClick={() => setDropdownOpen(false)} className="px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-amber-600 transition-colors flex items-center gap-2">
+                    Tariflerim
+                  </Link>
+                  <div className="border-t border-stone-100 my-1"></div>
+                  <Link to="/profil/ayarlar" onClick={() => setDropdownOpen(false)} className="px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-amber-600 transition-colors flex items-center gap-2">
+                    Ayarlar
+                  </Link>
+                  <Link to="/profil/ayarlar?tab=password" onClick={() => setDropdownOpen(false)} className="px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-amber-600 transition-colors flex items-center gap-2">
+                    Şifre Değiştir
+                  </Link>
+                  <div className="border-t border-stone-100 my-1"></div>
+                  <button
+                    type="button"
+                    onClick={() => { setDropdownOpen(false); handleLogout(); }}
+                    className="px-4 py-2 text-sm text-rose-600 font-medium hover:bg-rose-50 transition-colors text-left w-full flex items-center gap-2"
+                  >
+                    Çıkış Yap
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <>
               <Link

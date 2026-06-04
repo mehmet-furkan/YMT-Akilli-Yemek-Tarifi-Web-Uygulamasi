@@ -7,6 +7,7 @@ import RegisterPage from "./pages/RegisterPage";
 import IngredientSearchPage from "./pages/IngredientSearchPage";
 import RecipeDetailPage from "./pages/RecipeDetailPage";
 import ProfilePage from "./pages/ProfilePage";
+import ProfileSettingsPage from "./pages/ProfileSettingsPage";
 import RecommendationPage from "./pages/RecommendationPage";
 import FavoritesPage from "./pages/FavoritesPage";
 
@@ -33,6 +34,7 @@ function App() {
           <Route path="/search-by-ingredients" element={<IngredientSearchPage />} />
           <Route path="/tarifler/:id" element={<RecipeDetailPage />} />
           <Route path="/profil" element={<ProfilePage />} />
+          <Route path="/profil/ayarlar" element={<ProfileSettingsPage />} />
           <Route path="/favoriler" element={<FavoritesPage />} />
         </Route>
 

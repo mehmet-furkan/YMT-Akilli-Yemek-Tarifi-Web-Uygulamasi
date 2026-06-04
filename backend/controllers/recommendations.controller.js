@@ -7,7 +7,7 @@ const { getRecommendations } = require("../services/recommendation.service");
 // Body: { ingredients: string[] }
 // ─────────────────────────────────────────────
 const recommend = asyncHandler(async (req, res) => {
-  const { ingredients } = req.body;
+  const { ingredients, dietaryPreferences } = req.body;
 
   // Validation: en az 1 malzeme zorunlu
   if (!ingredients || !Array.isArray(ingredients) || ingredients.length === 0) {
@@ -15,7 +15,7 @@ const recommend = asyncHandler(async (req, res) => {
     throw new Error("En az bir malzeme girilmelidir");
   }
 
-  const results = await getRecommendations(ingredients);
+  const results = await getRecommendations(ingredients, dietaryPreferences);
 
   res.json({
     success: true,

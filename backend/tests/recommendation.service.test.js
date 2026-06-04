@@ -87,25 +87,25 @@ describe("recommendation.service — getRecommendations", () => {
 
   // --- 3. Kısmi eşleşme ve skor kontrolü ---
   it("kısmi eşleşmede doğru skor hesaplanır", async () => {
-    // Sadece omlet dönsün (2 malzeme, 1 eşleşme → score = 0.5)
+    // Sadece omlet dönsün (2 malzeme, 1 eşleşme → score = 50)
     const omletOnly = [mockRecipes[1]]; // Omlet: yumurta + tereyağı
     mockPopulate.mockResolvedValueOnce(omletOnly);
 
-    const result = await getRecommendations(["yumurta"]); // 1/2 = 0.5
+    const result = await getRecommendations(["yumurta"]); // 1/2 = 50
     expect(result).toHaveLength(1);
-    expect(result[0].score).toBe(0.5);
+    expect(result[0].score).toBe(50);
     expect(result[0].matchedIngredients).toContain("yumurta");
     expect(result[0].missingIngredients).toContain("tereyağı");
   });
 
-  // --- 4. Tam eşleşme — score 1.0 ---
-  it("tüm malzemeler eşleşince score 1.0 döner", async () => {
+  // --- 4. Tam eşleşme — score 100 ---
+  it("tüm malzemeler eşleşince score 100 döner", async () => {
     const omletOnly = [mockRecipes[1]]; // Omlet: yumurta + tereyağı
     mockPopulate.mockResolvedValueOnce(omletOnly);
 
     const result = await getRecommendations(["yumurta", "tereyağı"]);
     expect(result).toHaveLength(1);
-    expect(result[0].score).toBe(1.0);
+    expect(result[0].score).toBe(100);
     expect(result[0].missingIngredients).toHaveLength(0);
     expect(result[0].recipe.title).toBe("Omlet");
   });
@@ -113,25 +113,52 @@ describe("recommendation.service — getRecommendations", () => {
   // --- 5. Sıralama: yüksek skor önce ---
   it("sonuçlar score'a göre azalan sırayla gelir", async () => {
     // Menemen (4 malzeme) + Omlet (2 malzeme) — "yumurta" ve "soğan" verilince:
-    // Omlet: yumurta eşleşir (1/2 = 0.5)
-    // Menemen: yumurta + soğan eşleşir (2/4 = 0.5) — eşit puan
+    // Omlet: yumurta eşleşir (1/2 = 50)
+    // Menemen: yumurta + soğan eşleşir (2/4 = 50) — eşit puan
     const twoRecipes = [mockRecipes[0], mockRecipes[1]]; // Menemen + Omlet
     mockPopulate.mockResolvedValueOnce(twoRecipes);
 
     const result = await getRecommendations(["domates", "biber", "yumurta", "soğan"]);
-    // Menemen: 4/4 = 1.0, Omlet: 1/2 = 0.5 → Menemen önce gelmeli
+    // Menemen: 4/4 = 100, Omlet: 1/2 = 50 → Menemen önce gelmeli
     expect(result[0].recipe.title).toBe("Menemen");
-    expect(result[0].score).toBe(1.0);
-    expect(result[1].score).toBeLessThan(1.0);
+    expect(result[0].score).toBe(100);
+    expect(result[1].score).toBeLessThan(100);
   });
 
-  // --- 6. minScore filtresi — 0.5 altı düşer ---
-  it("score < 0.5 olan tarifler sonuçlara dahil edilmez", async () => {
-    // Mercimek çorbası (4 malzeme), sadece 1 malzeme var → 1/4 = 0.25 < 0.5
+  // --- 6. minScore filtresi — 20 altı düşer ---
+  it("score < 20 olan tarifler sonuçlara dahil edilmez", async () => {
+    // Mercimek çorbası (4 malzeme, 'tuz' hariç tutulur → 3 malzeme),
+    // sadece 1 malzeme var → 1/3 ≈ 33 >= 20 → sonuçta görünmeli
     const mercimekOnly = [mockRecipes[2]];
     mockPopulate.mockResolvedValueOnce(mercimekOnly);
 
-    const result = await getRecommendations(["soğan"]); // 1/4 = 0.25
+    const result = await getRecommendations(["soğan"]); // 1/3 ≈ 33
+    expect(result).toHaveLength(1);
+    expect(result[0].score).toBe(33);
+  });
+
+  it("score < 20 olan tarifler gerçekten düşer", async () => {
+    // 10 malzemeli tarif, sadece 1 eşleşme → 10% < 20%
+    const bigRecipe = [{
+      _id: "r4",
+      title: "Karmaşık",
+      ingredients: [
+        { name: "domates", amount: "1", optional: false },
+        { name: "biber", amount: "1", optional: false },
+        { name: "patlıcan", amount: "1", optional: false },
+        { name: "kabak", amount: "1", optional: false },
+        { name: "havuc", amount: "1", optional: false },
+        { name: "fasulye", amount: "1", optional: false },
+        { name: "bezelye", amount: "1", optional: false },
+        { name: "mantar", amount: "1", optional: false },
+        { name: "makarna", amount: "1", optional: false },
+        { name: "peynir", amount: "1", optional: false },
+      ],
+      createdBy: { name: "Test" },
+    }];
+    mockPopulate.mockResolvedValueOnce(bigRecipe);
+
+    const result = await getRecommendations(["domates"]); // 1/10 = 10%
     expect(result).toHaveLength(0);
   });
 
@@ -142,6 +169,7 @@ describe("recommendation.service — getRecommendations", () => {
 
     const result = await getRecommendations(
       ["domates", "biber", "yumurta", "soğan", "kırmızı mercimek", "havuç", "tuz"],
+      [], // dietaryPreferences
       2 // limit
     );
     expect(result.length).toBeLessThanOrEqual(2);

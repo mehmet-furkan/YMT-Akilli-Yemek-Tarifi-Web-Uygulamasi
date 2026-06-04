@@ -1,4 +1,4 @@
-import { useState, useRef, type KeyboardEvent } from "react";
+import { useState, useRef, type KeyboardEvent, type ClipboardEvent } from "react";
 
 interface IngredientChipInputProps {
   ingredients: string[];
@@ -16,14 +16,31 @@ export function IngredientChipInput({
   const [inputValue, setInputValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  function addIngredient(raw: string) {
-    const trimmed = raw.trim().toLowerCase();
-    if (!trimmed) return;
-    if (ingredients.includes(trimmed)) {
+  /**
+   * Ham metni virgül ve boşluk karakterlerinden bölerek
+   * her bir kelimeyi ayrı malzeme olarak ekler.
+   * Boş stringler ve tekrar eden malzemeler engellenir.
+   */
+  function addIngredients(raw: string) {
+    // Virgül veya boşluktan böl
+    const parts = raw
+      .split(/[,\s]+/)
+      .map((s) => s.trim().toLowerCase())
+      .filter((s) => s.length > 0);
+
+    if (parts.length === 0) {
       setInputValue("");
       return;
     }
-    onChange([...ingredients, trimmed]);
+
+    // Mevcut listede olmayanları ekle
+    const unique = parts.filter((p) => !ingredients.includes(p));
+    // Kendi içinde de tekrarı engelle
+    const deduped = [...new Set(unique)];
+
+    if (deduped.length > 0) {
+      onChange([...ingredients, ...deduped]);
+    }
     setInputValue("");
   }
 
@@ -34,13 +51,35 @@ export function IngredientChipInput({
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
-      addIngredient(inputValue);
+      addIngredients(inputValue);
+      return;
+    }
+    // Boşluk tuşu: mevcut kelimeyi bitir ve yeni malzeme olarak ekle
+    if (e.key === " ") {
+      const trimmed = inputValue.trim();
+      if (trimmed) {
+        e.preventDefault();
+        addIngredients(trimmed);
+      }
       return;
     }
     // Backspace ile son chip'i sil (input boşsa)
     if (e.key === "Backspace" && inputValue === "" && ingredients.length > 0) {
       removeIngredient(ingredients.length - 1);
     }
+  }
+
+  /**
+   * Kopyala-yapıştır: yapıştırılan metin virgül veya boşluk içeriyorsa
+   * otomatik olarak ayrıştır ve ayrı etiketler olarak ekle.
+   */
+  function handlePaste(e: ClipboardEvent<HTMLInputElement>) {
+    const pasted = e.clipboardData.getData("text");
+    if (pasted.includes(",") || pasted.includes(" ")) {
+      e.preventDefault();
+      addIngredients(pasted);
+    }
+    // Tek kelime yapıştırıldıysa normal davranışa izin ver
   }
 
   return (
@@ -73,7 +112,8 @@ export function IngredientChipInput({
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
         onKeyDown={handleKeyDown}
-        onBlur={() => addIngredient(inputValue)}
+        onPaste={handlePaste}
+        onBlur={() => addIngredients(inputValue)}
         placeholder={ingredients.length === 0 ? placeholder : ""}
         className="flex-1 min-w-[160px] outline-none text-sm text-stone-700 placeholder:text-stone-400 bg-transparent"
         aria-label="Malzeme girişi"
@@ -81,3 +121,4 @@ export function IngredientChipInput({
     </div>
   );
 }
+
