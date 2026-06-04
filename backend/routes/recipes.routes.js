@@ -4,6 +4,7 @@ const router = express.Router();
 const {
   getRecipes,
   getRecipeById,
+  getRandomRecipe,
   createRecipe,
   updateRecipe,
   deleteRecipe,
@@ -25,6 +26,10 @@ const {
 
 // ── /api/recipes/search-by-ingredients ────────
 router.post("/search-by-ingredients", searchByIngredients);
+
+// ── /api/recipes/random ───────────────────────
+// GET — Rastgele 1 tarif döner (Public)
+router.get("/random", getRandomRecipe);
 
 // ── /api/recipes ──────────────────────────────
 router
