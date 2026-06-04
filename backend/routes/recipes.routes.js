@@ -10,6 +10,12 @@ const {
   searchByIngredients,
 } = require("../controllers/recipes.controller");
 
+// 1. Yorum controller'ından GET ve POST fonksiyonlarını çekiyoruz
+const {
+  getComments,
+  createComment,
+} = require("../controllers/comments.controller");
+
 const { protect } = require("../middleware/authMiddleware");
 const {
   createRecipeSchema,
@@ -18,26 +24,27 @@ const {
 } = require("../lib/validation/recipe.schema");
 
 // ── /api/recipes/search-by-ingredients ────────
-// POST — Malzemelere göre tarif ara, eşleşme skoruyla (Public)
-// NOT: "/:id" route'undan ÖNCE tanımlı olmalı, aksi halde :id yakalar.
 router.post("/search-by-ingredients", searchByIngredients);
 
 // ── /api/recipes ──────────────────────────────
-// GET    — Tarifleri listele (Public)
-// POST   — Yeni tarif oluştur (Private + Zod validate)
 router
   .route("/")
   .get(getRecipes)
   .post(protect, validate(createRecipeSchema), createRecipe);
 
 // ── /api/recipes/:id ──────────────────────────
-// GET    — Tarif detayı (Public)
-// PUT    — Tarif güncelle (Private + owner + Zod validate)
-// DELETE — Tarif sil (Private + owner)
 router
   .route("/:id")
   .get(getRecipeById)
   .put(protect, validate(updateRecipeSchema), updateRecipe)
   .delete(protect, deleteRecipe);
+
+// ── /api/recipes/:id/comments ─────────────────
+// GET: Tarifin yorumlarını getir (Public - herkes görebilir)
+// POST: Tarife yorum yap (Private - sadece giriş yapanlar)
+router
+  .route("/:id/comments")
+  .get(getComments)
+  .post(protect, createComment);
 
 module.exports = router;
