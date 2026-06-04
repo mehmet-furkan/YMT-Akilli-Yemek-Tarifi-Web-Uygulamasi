@@ -8,6 +8,7 @@
     "dev": "nodemon server.js",
     "seed": "node scripts/seed.js",
     "seed:recipes": "node scripts/seedRecipes.js",
+    "seed:nutrition": "node scripts/enrichNutrition.js",
     "images:backfill": "node scripts/updateRecipeImages.js",
     "test": "jest --runInBand --forceExit",
     "test:watch": "jest --watch"
