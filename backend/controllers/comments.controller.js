@@ -1,75 +1,73 @@
 const Comment = require("../models/Comment");
-const { z } = require("zod");
+const asyncHandler = require("../lib/asyncHandler");
 
-// Zod Doğrulama Şeması (Gelen veriyi kontrol etmek için)
-const commentSchema = z.object({
-  rating: z.number().min(1, "Puan en az 1 olmalıdır.").max(5, "Puan en fazla 5 olmalıdır."),
-  text: z.string().max(500, "Yorum 500 karakterden uzun olamaz.").optional().default(""),
+// ─────────────────────────────────────────────
+// GET /api/recipes/:id/comments
+// Bir tarifin tüm yorumlarını listele (Public).
+// userId populate edilerek yalnızca "name" alanı dönderilir.
+// ─────────────────────────────────────────────
+const getComments = asyncHandler(async (req, res) => {
+  const comments = await Comment.find({ recipeId: req.params.id })
+    .populate("userId", "name")
+    .sort({ createdAt: -1 });
+
+  res.json({ success: true, data: comments });
 });
 
-// GET: Bir tarifin tüm yorumlarını getirir
-exports.getComments = async (req, res) => {
-  try {
-    const comments = await Comment.find({ recipeId: req.params.id })
-      .populate("userId", "name") // Yorumu yapanın sadece adını getiriyoruz
-      .sort({ createdAt: -1 }); // En yeni yorumlar en üstte görünsün
-      
-    res.status(200).json(comments);
-  } catch (error) {
-    res.status(500).json({ message: "Yorumlar getirilirken bir hata oluştu.", error: error.message });
-  }
-};
+// ─────────────────────────────────────────────
+// POST /api/recipes/:id/comments
+// Yeni yorum oluştur (Private + Zod validate + commentLimiter).
+// Aynı kullanıcı aynı tarife birden fazla yorum atamaz (compound unique index).
+// ─────────────────────────────────────────────
+const createComment = asyncHandler(async (req, res) => {
+  // req.body, validate middleware'i tarafından zaten parse edilmiş ve XSS
+  // temizlenmiştir. Burada yeniden parse etmeye gerek yok.
+  const { rating, text } = req.body;
 
-// POST: Bir tarife yeni yorum ekler
-exports.createComment = async (req, res) => {
   try {
-    // 1. Gelen veriyi Zod ile doğrula
-    const { rating, text } = commentSchema.parse(req.body);
-
-    // 2. Yeni yorumu oluştur
-    const newComment = new Comment({
+    const comment = await Comment.create({
       recipeId: req.params.id,
-      userId: req.user.id, // Auth middleware'den gelen giriş yapmış kullanıcının ID'si (Eğer sizde req.user._id kullanılıyorsa burayı _id olarak değiştir)
+      userId: req.user._id,
       rating,
-      text
+      text,
     });
-
-    // 3. Veritabanına kaydet
-    await newComment.save();
-    
-    // 4. Frontend'e hemen ismini de göstermek için populate et
-    await newComment.populate("userId", "name");
-    
-    res.status(201).json(newComment);
-  } catch (error) {
-    // Zod doğrulama hatası yakalama
-    if (error.name === "ZodError") {
-      return res.status(400).json({ message: "Doğrulama hatası", errors: error.errors });
+    await comment.populate("userId", "name");
+    res.status(201).json({ success: true, data: comment });
+  } catch (err) {
+    // Compound unique index — aynı kullanıcı aynı tarife tek yorum
+    if (err.code === 11000) {
+      res.status(400);
+      throw new Error("Bu tarife zaten yorum yaptınız");
     }
-    // MongoDB 11000 Hatası: Compound Index'e takıldı (Aynı kullanıcı 2. kez yorum yapmaya çalışıyor)
-    if (error.code === 11000) {
-      return res.status(400).json({ message: "Bu tarife zaten yorum yaptınız." });
-    }
-    res.status(500).json({ message: "Yorum eklenirken hata oluştu.", error: error.message });
+    throw err;
   }
-};
+});
 
-// DELETE: Kullanıcının kendi yorumunu silmesi
-exports.deleteComment = async (req, res) => {
-  try {
-    const comment = await Comment.findById(req.params.id);
-    if (!comment) {
-      return res.status(404).json({ message: "Yorum bulunamadı." });
-    }
+// ─────────────────────────────────────────────
+// DELETE /api/comments/:id
+// Yorum sahibi kendi yorumunu silebilir (Private + owner check).
+// ─────────────────────────────────────────────
+const deleteComment = asyncHandler(async (req, res) => {
+  const comment = await Comment.findById(req.params.id);
 
-    // Yorumun sahibi, silmeye çalışan kişi ile aynı mı kontrolü
-    if (comment.userId.toString() !== req.user.id.toString()) {
-      return res.status(403).json({ message: "Bu yorumu silme yetkiniz yok." });
-    }
-
-    await comment.deleteOne();
-    res.status(200).json({ message: "Yorum başarıyla silindi." });
-  } catch (error) {
-    res.status(500).json({ message: "Yorum silinirken hata oluştu.", error: error.message });
+  if (!comment) {
+    res.status(404);
+    throw new Error("Yorum bulunamadı");
   }
+
+  if (comment.userId.toString() !== req.user._id.toString()) {
+    res.status(403);
+    throw new Error("Bu yorumu silme yetkiniz yok");
+  }
+
+  await comment.deleteOne();
+
+  // OpenAPI spec: 204 No Content (favorites delete ile aynı pattern)
+  res.status(204).send();
+});
+
+module.exports = {
+  getComments,
+  createComment,
+  deleteComment,
 };

@@ -335,6 +335,104 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  # ── COMMENTS (puanlama + yorum) ────────
+  /recipes/{id}/comments:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string }
+        description: Tarif ObjectId
+    get:
+      tags: [Comments]
+      summary: Bir tarifin tüm yorumlarını listeler (Public).
+      operationId: getComments
+      responses:
+        "200":
+          description: Yorum listesi (en yeni en üstte)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Comment"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    post:
+      tags: [Comments]
+      summary: Bir tarife yeni yorum + puan ekler.
+      description: |
+        Aynı kullanıcı aynı tarife birden fazla yorum yapamaz (compound unique index).
+        Rate limit: 30 istek/saat/IP. XSS pattern içeren yorumlar reddedilir.
+      operationId: createComment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentCreateRequest"
+      responses:
+        "201":
+          description: Yorum oluşturuldu
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: "#/components/schemas/Comment"
+        "400":
+          description: Doğrulama hatası veya duplicate yorum
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          description: Rate limit aşıldı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /comments/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string }
+        description: Yorum ObjectId
+    delete:
+      tags: [Comments]
+      summary: Yorum sahibi kendi yorumunu siler.
+      operationId: deleteComment
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Yorum silindi
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          description: Rate limit aşıldı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   # ── FAVORITES ───────────────────────────
   /favorites:
     get:
@@ -759,6 +857,38 @@ components:
               recipe:
                 $ref: "#/components/schemas/Recipe"
         createdAt: { type: string, format: date-time }
+
+    CommentCreateRequest:
+      type: object
+      required: [rating]
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+          description: "1-5 arası puan"
+        text:
+          type: string
+          maxLength: 500
+          example: "Harika oldu, tekrar yapacağım!"
+          description: "Yorum metni (opsiyonel). XSS pattern içeren metinler reddedilir."
+
+    Comment:
+      type: object
+      properties:
+        _id: { type: string, example: "664c..." }
+        recipeId: { type: string, example: "664b..." }
+        userId:
+          type: object
+          description: "populate edilmiş user (sadece name döner)"
+          properties:
+            _id: { type: string }
+            name: { type: string, example: "Mehmet Furkan" }
+        rating: { type: integer, minimum: 1, maximum: 5, example: 5 }
+        text: { type: string, example: "Harika oldu, tekrar yapacağım!" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
 
     AuthResponse:
       type: object
