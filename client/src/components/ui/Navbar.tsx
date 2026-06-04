@@ -1,32 +1,27 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 
 /**
- * Navbar
+ * Navbar — top-level nav bar shown on every page (except /login, /register).
  *
- * Emre'nin AuthContext'i hazır olunca `useAuth()` ile replace edilecek.
- * Şimdilik localStorage token varlığını kontrol eder.
+ * Auth: pulls user/logout from AuthContext. On logout the JWT is cleared
+ * (sessionStorage) and the user is redirected to /login.
  */
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
-
-  // Geçici auth kontrolü — Emre'nin AuthContext'i entegre edilince değişecek
-  const isLoggedIn = Boolean(localStorage.getItem('nck_token'));
+  const { user, isAuthenticated, logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem('nck_token');
+    logout();
     setMenuOpen(false);
-    navigate('/');
-    // Sayfayı zorla yenile: React state yönetimi olmadığından gerekli
-    window.location.reload();
+    navigate('/login', { replace: true });
   };
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     `text-sm font-medium transition-colors ${
-      isActive
-        ? 'text-amber-600'
-        : 'text-stone-600 hover:text-amber-600'
+      isActive ? 'text-amber-600' : 'text-stone-600 hover:text-amber-600'
     }`;
 
   return (
@@ -48,35 +43,62 @@ export function Navbar() {
           <NavLink to="/" end className={navLinkClass}>
             Ana Sayfa
           </NavLink>
-          <NavLink to="/tarifler" className={navLinkClass}>
-            Tarifler
+          <NavLink to="/oneri" className={navLinkClass}>
+            Öneri
           </NavLink>
-          {isLoggedIn && (
-            <NavLink to="/profil" className={navLinkClass}>
-              Profilim
-            </NavLink>
+          {isAuthenticated && (
+            <>
+              <NavLink to="/favoriler" className={navLinkClass}>
+                Favorilerim
+              </NavLink>
+              <NavLink to="/profil" className={navLinkClass}>
+                Profilim
+              </NavLink>
+            </>
           )}
         </div>
 
         {/* Desktop auth actions */}
-        <div className="hidden md:flex items-center gap-2">
-          {isLoggedIn ? (
-            <button
-              onClick={handleLogout}
-              className="text-sm font-medium text-stone-600 hover:text-rose-600 transition-colors"
-            >
-              Çıkış Yap
-            </button>
+        <div className="hidden md:flex items-center gap-3">
+          {isAuthenticated ? (
+            <>
+              {user?.name && (
+                <span className="text-sm text-stone-500" aria-label="Giriş yapan kullanıcı">
+                  Merhaba,{' '}
+                  <span className="font-medium text-stone-700">
+                    {user.name.split(' ')[0]}
+                  </span>
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-stone-600 hover:text-rose-600 transition-colors"
+                aria-label="Oturumu kapat"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="w-4 h-4"
+                  aria-hidden="true"
+                >
+                  <path fillRule="evenodd" d="M3 4.25A2.25 2.25 0 0 1 5.25 2h5.5A2.25 2.25 0 0 1 13 4.25v2a.75.75 0 0 1-1.5 0v-2a.75.75 0 0 0-.75-.75h-5.5a.75.75 0 0 0-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 0 0 .75-.75v-2a.75.75 0 0 1 1.5 0v2A2.25 2.25 0 0 1 10.75 18h-5.5A2.25 2.25 0 0 1 3 15.75V4.25z" clipRule="evenodd" />
+                  <path fillRule="evenodd" d="M19 10a.75.75 0 0 0-.22-.53l-3.25-3.25a.75.75 0 1 0-1.06 1.06l1.97 1.97H8.75a.75.75 0 0 0 0 1.5h7.69l-1.97 1.97a.75.75 0 1 0 1.06 1.06l3.25-3.25A.75.75 0 0 0 19 10z" clipRule="evenodd" />
+                </svg>
+                Çıkış Yap
+              </button>
+            </>
           ) : (
             <>
               <Link
-                to="/giris"
+                to="/login"
                 className="text-sm font-medium text-stone-600 hover:text-amber-700 transition-colors"
               >
                 Giriş Yap
               </Link>
               <Link
-                to="/kayit"
+                to="/register"
                 className="text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-white px-4 py-1.5 rounded-full transition-colors"
               >
                 Kayıt Ol
@@ -87,6 +109,7 @@ export function Navbar() {
 
         {/* Mobile hamburger */}
         <button
+          type="button"
           onClick={() => setMenuOpen((prev) => !prev)}
           className="md:hidden p-2 rounded-lg text-stone-600 hover:bg-amber-100 transition-colors"
           aria-label={menuOpen ? 'Menüyü kapat' : 'Menüyü aç'}
@@ -116,40 +139,58 @@ export function Navbar() {
             Ana Sayfa
           </NavLink>
           <NavLink
-            to="/tarifler"
+            to="/oneri"
             className={navLinkClass}
             onClick={() => setMenuOpen(false)}
           >
-            Tarifler
+            Öneri
           </NavLink>
-          {isLoggedIn && (
-            <NavLink
-              to="/profil"
-              className={navLinkClass}
-              onClick={() => setMenuOpen(false)}
-            >
-              Profilim
-            </NavLink>
+          {isAuthenticated && (
+            <>
+              <NavLink
+                to="/favoriler"
+                className={navLinkClass}
+                onClick={() => setMenuOpen(false)}
+              >
+                Favorilerim
+              </NavLink>
+              <NavLink
+                to="/profil"
+                className={navLinkClass}
+                onClick={() => setMenuOpen(false)}
+              >
+                Profilim
+              </NavLink>
+            </>
           )}
           <div className="border-t border-amber-100 pt-3 flex flex-col gap-2">
-            {isLoggedIn ? (
-              <button
-                onClick={handleLogout}
-                className="text-sm font-medium text-rose-600 text-left"
-              >
-                Çıkış Yap
-              </button>
+            {isAuthenticated ? (
+              <>
+                {user?.name && (
+                  <span className="text-xs text-stone-500">
+                    Giriş:{' '}
+                    <span className="font-medium text-stone-700">{user.name}</span>
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="text-sm font-medium text-rose-600 text-left"
+                >
+                  Çıkış Yap
+                </button>
+              </>
             ) : (
               <>
                 <Link
-                  to="/giris"
+                  to="/login"
                   className="text-sm font-medium text-stone-600"
                   onClick={() => setMenuOpen(false)}
                 >
                   Giriş Yap
                 </Link>
                 <Link
-                  to="/kayit"
+                  to="/register"
                   className="text-sm font-semibold bg-amber-500 text-white text-center py-2 rounded-full"
                   onClick={() => setMenuOpen(false)}
                 >
@@ -163,4 +204,3 @@ export function Navbar() {
     </header>
   );
 }
-
