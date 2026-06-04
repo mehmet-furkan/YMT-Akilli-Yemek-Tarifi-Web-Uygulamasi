@@ -84,6 +84,14 @@ const RecipeSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    // Besin değerleri — porsiyon başına tahmini değerler (C.1 görevi: Zehra)
+    // Tüm alanlar opsiyonel: enrichNutrition.js scripti backfill eder
+    nutrition: {
+      calories: { type: Number, min: 0 }, // kcal / porsiyon
+      protein:  { type: Number, min: 0 }, // gram
+      carbs:    { type: Number, min: 0 }, // gram
+      fat:      { type: Number, min: 0 }, // gram
+    },
     imageUrl: {
       type: String,
       default: "",
