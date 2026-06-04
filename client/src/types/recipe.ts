@@ -9,6 +9,18 @@ export interface RecipeIngredient {
   optional?: boolean;
 }
 
+// ─── Besin değerleri (C.1 — Zehra) ────────────────────────────────────────
+// Tüm değerler 1 porsiyon için geçerlidir.
+// Furkan Y.'nin B.4 (porsiyon çarpanı) göreviyle koordineli:
+//   gösterilen değer = nutrition.calories * multiplier
+
+export interface RecipeNutrition {
+  calories?: number; // kcal
+  protein?:  number; // gram
+  carbs?:    number; // gram
+  fat?:      number; // gram
+}
+
 // ─── Ana tarif ───────────────────────────────────────────────────────────────
 
 export interface Recipe {
@@ -30,6 +42,7 @@ export interface Recipe {
     | 'Atıştırmalık';
   difficulty: 'Kolay' | 'Orta' | 'Zor';
   tags?: string[];            // opsiyonel
+  nutrition?: RecipeNutrition; // C.1: besin değerleri — enrichNutrition.js ile doldurulur
   imageUrl?: string;          // opsiyonel
   createdBy: string | { _id: string; name: string };
   createdAt?: string;
