@@ -44,16 +44,19 @@ export const AuthContext = createContext<AuthContextValue | null>(null);
 
 const TOKEN_KEY = "token";
 
+// NOTE: We use sessionStorage (not localStorage) so the JWT survives page
+// refreshes but is cleared when the browser tab is closed. This way users
+// must log in again every time they re-open the app — per product requirement.
 function getStoredToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+  return sessionStorage.getItem(TOKEN_KEY);
 }
 
 function setStoredToken(token: string): void {
-  localStorage.setItem(TOKEN_KEY, token);
+  sessionStorage.setItem(TOKEN_KEY, token);
 }
 
 function removeStoredToken(): void {
-  localStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
 }
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
