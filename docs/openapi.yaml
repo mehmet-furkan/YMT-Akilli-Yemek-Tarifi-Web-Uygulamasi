@@ -655,6 +655,15 @@ components:
           items: { type: string }
           example: ["kahvaltı", "yumurta"]
         imageUrl: { type: string, example: "" }
+        # C.1 (Zehra) — besin değerleri, enrichNutrition.js ile backfill edilir
+        nutrition:
+          type: object
+          description: "Porsiyon başına tahmini besin değerleri (opsiyonel)"
+          properties:
+            calories: { type: number, minimum: 0, example: 210, description: "kcal / porsiyon" }
+            protein:  { type: number, minimum: 0, example: 13,  description: "gram" }
+            carbs:    { type: number, minimum: 0, example: 9,   description: "gram" }
+            fat:      { type: number, minimum: 0, example: 14,  description: "gram" }
 
     RecommendationRequest:
       type: object
@@ -736,6 +745,15 @@ components:
           type: array
           items: { type: string }
         imageUrl: { type: string }
+        # C.1 (Zehra) — porsiyon başına tahmini besin değerleri
+        nutrition:
+          type: object
+          description: "enrichNutrition.js ile doldurulur. Yoksa alan gelmez."
+          properties:
+            calories: { type: number, example: 210, description: "kcal / porsiyon" }
+            protein:  { type: number, example: 13,  description: "gram" }
+            carbs:    { type: number, example: 9,   description: "gram" }
+            fat:      { type: number, example: 14,  description: "gram" }
         createdBy:
           type: object
           properties:
