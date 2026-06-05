@@ -38,7 +38,7 @@ export function ProfileHeader({ user }: { user: any }) {
             
             <Link
               to="/profil/ayarlar"
-              className="inline-flex items-center justify-center px-6 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium rounded-full transition-colors"
+              className="inline-flex items-center justify-center w-full md:w-auto px-6 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium rounded-full transition-colors"
             >
               Profili Düzenle
             </Link>

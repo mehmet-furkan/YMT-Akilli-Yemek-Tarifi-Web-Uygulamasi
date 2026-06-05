@@ -52,7 +52,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <main className="min-h-screen bg-stone-50 py-10 px-4">
+    <main className="min-h-screen bg-stone-50 py-6 px-3 sm:py-10 sm:px-4">
       <div className="max-w-6xl mx-auto">
         <ProfileHeader user={enrichedUser} />
         <UserTabs />

@@ -22,7 +22,7 @@ function Toast({
 
   return (
     <div
-      className="fixed top-6 left-1/2 -translate-x-1/2 z-50 animate-[slideDown_0.3s_ease-out]"
+      className="fixed top-6 left-1/2 -translate-x-1/2 z-50 max-w-[90vw] animate-[slideDown_0.3s_ease-out]"
       style={{ animation: "slideDown 0.3s ease-out" }}
     >
       <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-red-50 border border-red-200 shadow-lg">
@@ -146,7 +146,7 @@ export default function RecommendationPage() {
   }
 
   return (
-    <main className="min-h-screen bg-amber-50/40 py-10 px-4">
+    <main className="min-h-screen bg-amber-50/40 py-6 px-3 sm:py-10 sm:px-4">
       {/* Toast uyarı */}
       <Toast
         message={`Lütfen en az ${MIN_INGREDIENTS} malzeme girin.`}
