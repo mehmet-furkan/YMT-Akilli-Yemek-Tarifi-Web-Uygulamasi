@@ -1,4 +1,4 @@
-﻿import {
+import {
   createContext,
   useState,
   useEffect,
@@ -13,6 +13,22 @@ export interface User {
   _id: string;
   email: string;
   name: string;
+  // Profil alanları (User modeliyle uyumlu — backend/models/User.js).
+  // Hepsi opsiyonel: eski kullanıcılarda olmayabilir, JSON'da string olarak gelir.
+  username?: string;
+  profilePhoto?: string;
+  coverPhoto?: string;
+  bio?: string;
+  city?: string;
+  gender?: string;
+  birthDate?: string;
+  followersCount?: number;
+  followingCount?: number;
+  recipesCount?: number;
+  preferences?: {
+    diet?: string[];
+    allergies?: string[];
+  };
 }
 
 /** Backend'den gelen standart yanıt zarfı */
@@ -34,6 +50,7 @@ export interface AuthContextValue {
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
   me: () => Promise<User>;
+  setUser: (user: User) => void;
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -131,6 +148,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     login,
     logout,
     me,
+    setUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -12,6 +12,14 @@ const RecipeSchema = new mongoose.Schema(
       trim: true,
       maxlength: [100, "Tarif adı en fazla 100 karakter olabilir"],
     },
+    status: {
+      type: String,
+      enum: {
+        values: ["draft", "published"],
+        message: "Durum draft veya published olmalıdır",
+      },
+      default: "draft",
+    },
     description: {
       type: String,
       required: [true, "Tarif açıklaması zorunludur"],

@@ -26,9 +26,10 @@ const getRecipes = asyncHandler(async (req, res) => {
   //    Birden fazla ingredient → $all (tüm malzemeler olsun)
   if (ingredient) {
     const ingredients = Array.isArray(ingredient) ? ingredient : [ingredient];
-    // Case-insensitive regex ile eşleştirme
+    // Case-insensitive ve word-boundary (tam kelime) regex ile eşleştirme (Türkçe uyumlu)
+    const boundary = "[^a-zA-Z0-9çğıöşüÇĞIÖŞÜ]";
     filter["ingredients.name"] = {
-      $all: ingredients.map((i) => new RegExp(i, "i")),
+      $all: ingredients.map((i) => new RegExp(`(^|${boundary})${i}(${boundary}|$)`, "i")),
     };
   }
 
@@ -185,20 +186,26 @@ const searchByIngredients = asyncHandler(async (req, res) => {
   const searchIngs = ingredients.map((i) => String(i).toLowerCase());
   const allRecipes = await Recipe.find().populate("createdBy", "name");
 
+  // Tam kelime eşleşmesi için yardımcı fonksiyon (Türkçe karakter destekli)
+  const isExactMatch = (recipeIng, searchIng) => {
+    const boundary = "[^a-zA-Z0-9çğıöşüÇĞIÖŞÜ]";
+    const regexU = new RegExp(`(^|${boundary})${searchIng}(${boundary}|$)`, "i");
+    const regexR = new RegExp(`(^|${boundary})${recipeIng}(${boundary}|$)`, "i");
+    return regexU.test(recipeIng) || regexR.test(searchIng);
+  };
+
   const scored = allRecipes
     .map((recipe) => {
       const recipeIngs = recipe.ingredients.map((i) => i.name.toLowerCase());
       const matchedCount = searchIngs.filter((si) =>
-        recipeIngs.some((ri) => ri.includes(si) || si.includes(ri))
+        recipeIngs.some((ri) => isExactMatch(ri, si))
       ).length;
 
       const required = recipe.ingredients.filter((i) => !i.optional);
       const missing = required.filter(
         (i) =>
           !searchIngs.some(
-            (si) =>
-              i.name.toLowerCase().includes(si) ||
-              si.includes(i.name.toLowerCase())
+            (si) => isExactMatch(i.name.toLowerCase(), si)
           )
       );
 

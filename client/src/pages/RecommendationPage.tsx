@@ -1,7 +1,44 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { IngredientChipInput } from "../components/feature/IngredientChipInput";
 import { useRecommendations } from "../hooks/useRecommendations";
+import { useAuth } from "../hooks/useAuth";
 import type { RecommendationResult } from "../types/recipe";
+
+const MIN_INGREDIENTS = 3;
+
+// ─── Toast bileşeni ────────────────────────────────────────────────────────
+
+function Toast({
+  message,
+  visible,
+  onClose,
+}: {
+  message: string;
+  visible: boolean;
+  onClose: () => void;
+}) {
+  if (!visible) return null;
+
+  return (
+    <div
+      className="fixed top-6 left-1/2 -translate-x-1/2 z-50 animate-[slideDown_0.3s_ease-out]"
+      style={{ animation: "slideDown 0.3s ease-out" }}
+    >
+      <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-red-50 border border-red-200 shadow-lg">
+        <span className="text-red-500 text-lg">⚠️</span>
+        <p className="text-sm font-medium text-red-700">{message}</p>
+        <button
+          onClick={onClose}
+          className="ml-2 text-red-400 hover:text-red-600 transition-colors"
+          aria-label="Kapat"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // ─── Skeleton kart ─────────────────────────────────────────────────────────
 
@@ -35,7 +72,8 @@ function ResultCard({ result }: { result: RecommendationResult }) {
       : "bg-red-100 text-red-600";
 
   return (
-    <article className="rounded-2xl bg-white border border-stone-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+    <Link to={`/tarifler/${recipe._id}`} className="block">
+    <article className="rounded-2xl bg-white border border-stone-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer hover:scale-[1.02] transition-transform duration-200">
       {recipe.imageUrl ? (
         <img
           src={recipe.imageUrl}
@@ -77,25 +115,45 @@ function ResultCard({ result }: { result: RecommendationResult }) {
         )}
       </div>
     </article>
+    </Link>
   );
 }
 
 // ─── Sayfa ─────────────────────────────────────────────────────────────────
 
 export default function RecommendationPage() {
+  const { user } = useAuth();
   const [ingredients, setIngredients] = useState<string[]>([]);
+  const [toastVisible, setToastVisible] = useState(false);
   const { mutate, data, isPending, isSuccess } = useRecommendations();
 
   const results = data?.data ?? [];
   const hasSearched = isSuccess;
+  const isInsufficient = ingredients.length < MIN_INGREDIENTS;
+
+  function showWarning() {
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 3000);
+  }
 
   function handleSubmit() {
-    if (ingredients.length === 0) return;
-    mutate({ ingredients });
+    if (isInsufficient) {
+      showWarning();
+      return;
+    }
+    const dietaryPreferences = user?.preferences?.diet ?? [];
+    mutate({ ingredients, dietaryPreferences });
   }
 
   return (
     <main className="min-h-screen bg-amber-50/40 py-10 px-4">
+      {/* Toast uyarı */}
+      <Toast
+        message={`Lütfen en az ${MIN_INGREDIENTS} malzeme girin.`}
+        visible={toastVisible}
+        onClose={() => setToastVisible(false)}
+      />
+
       <div className="max-w-2xl mx-auto">
         {/* Başlık */}
         <div className="text-center mb-8">
@@ -115,13 +173,25 @@ export default function RecommendationPage() {
           <IngredientChipInput
             ingredients={ingredients}
             onChange={setIngredients}
+            placeholder="En az üç malzeme girin"
           />
-          <p className="text-xs text-stone-400">
-            Her malzemeyi girdikten sonra <kbd className="px-1 py-0.5 bg-stone-100 rounded text-stone-500">Enter</kbd>'a bas
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-stone-400">
+              Her malzemeyi girdikten sonra{" "}
+              <kbd className="px-1 py-0.5 bg-stone-100 rounded text-stone-500">
+                Enter
+              </kbd>
+              'a bas
+            </p>
+            {ingredients.length > 0 && ingredients.length < MIN_INGREDIENTS && (
+              <p className="text-xs text-amber-600 font-medium">
+                {MIN_INGREDIENTS - ingredients.length} malzeme daha ekle
+              </p>
+            )}
+          </div>
           <button
             onClick={handleSubmit}
-            disabled={ingredients.length === 0 || isPending}
+            disabled={isInsufficient || isPending}
             className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:bg-stone-200 disabled:cursor-not-allowed text-white font-semibold transition-colors"
           >
             {isPending ? "Öneriler aranıyor…" : "Öneri Al"}
@@ -164,6 +234,20 @@ export default function RecommendationPage() {
           )}
         </section>
       </div>
+
+      {/* Toast animasyonu */}
+      <style>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translate(-50%, -20px);
+          }
+          to {
+            opacity: 1;
+            transform: translate(-50%, 0);
+          }
+        }
+      `}</style>
     </main>
   );
 }

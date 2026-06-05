@@ -13,6 +13,8 @@ servers:
 tags:
   - name: Auth
     description: Kimlik doğrulama işlemleri
+  - name: Users
+    description: Profil, ayarlar ve kullanıcıya özel veriler
   - name: Recipes
     description: Tarif CRUD ve arama
   - name: Favorites
@@ -128,6 +130,215 @@ paths:
       responses:
         "204":
           description: Çıkış başarılı
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ── USERS (profil + ayarlar) ────────────
+  /users/profile:
+    get:
+      tags: [Users]
+      summary: Giriş yapan kullanıcının profilini getirir.
+      operationId: getUserProfile
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Profil bilgileri
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      tags: [Users]
+      summary: Profil bilgilerini günceller.
+      description: "Yalnızca gönderilen alanlar güncellenir (kısmi güncelleme)."
+      operationId: updateUserProfile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfileUpdateRequest"
+      responses:
+        "200":
+          description: Güncellenmiş profil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /users/preferences:
+    put:
+      tags: [Users]
+      summary: Beslenme tercihlerini (diyet) günceller.
+      operationId: updatePreferences
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [dietaryPreferences]
+              properties:
+                dietaryPreferences:
+                  type: array
+                  items: { type: string }
+                  example: ["Vegan", "Glutensiz"]
+      responses:
+        "200":
+          description: Güncellenmiş tercihler
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      _id: { type: string }
+                      name: { type: string }
+                      email: { type: string, format: email }
+                      preferences:
+                        type: object
+                        properties:
+                          diet: { type: array, items: { type: string } }
+                          allergies: { type: array, items: { type: string } }
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /users/me/stats:
+    get:
+      tags: [Users]
+      summary: Kullanıcının yayınlanmış tarif sayısı gibi istatistiklerini getirir.
+      operationId: getUserStats
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: İstatistikler
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      recipesCount: { type: integer, example: 3 }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /users/me/recipes:
+    get:
+      tags: [Users]
+      summary: Kullanıcının yayınlanmış (published) tariflerini getirir.
+      operationId: getUserRecipes
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Yayınlanmış tarif listesi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Recipe"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /users/me/drafts:
+    get:
+      tags: [Users]
+      summary: Kullanıcının taslak (draft) tariflerini getirir.
+      operationId: getUserDrafts
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Taslak tarif listesi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Recipe"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /users/me/saved:
+    get:
+      tags: [Users]
+      summary: Kullanıcının kaydettiği (bookmark) tarifleri getirir.
+      operationId: getUserSavedRecipes
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Kaydedilen tarif listesi (populate edilmiş)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Recipe"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /users/me/comments:
+    get:
+      tags: [Users]
+      summary: Kullanıcının yaptığı yorumları getirir (tarif başlık + görsel populate'li).
+      operationId: getUserComments
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Yorum listesi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Comment"
         "401":
           $ref: "#/components/responses/Unauthorized"
 
@@ -789,6 +1000,27 @@ components:
                 enum: ["Kahvaltı", "Öğle Yemeği", "Akşam Yemeği", "Atıştırmalık"]
               recipeId: { type: string }
 
+    UserProfileUpdateRequest:
+      type: object
+      description: "PUT /users/profile body. Tüm alanlar opsiyonel — yalnızca gönderilenler güncellenir."
+      properties:
+        name: { type: string, example: "Mehmet Furkan" }
+        email: { type: string, format: email }
+        username: { type: string, example: "mehmetfurkan" }
+        bio: { type: string, maxLength: 160 }
+        city: { type: string, example: "İstanbul" }
+        gender:
+          type: string
+          enum: ["Kadın", "Erkek", "Belirtmek İstemiyorum"]
+        birthDate: { type: string, format: date }
+        profilePhoto: { type: string }
+        coverPhoto: { type: string }
+        preferences:
+          type: object
+          properties:
+            diet: { type: array, items: { type: string } }
+            allergies: { type: array, items: { type: string } }
+
     # ── Data Schemas ──────────────────────
     User:
       type: object
@@ -796,6 +1028,19 @@ components:
         _id: { type: string }
         name: { type: string }
         email: { type: string, format: email }
+        # Profil alanları (Görev 6 — Profil + Ayarlar sistemi). Hepsi opsiyonel.
+        username: { type: string, example: "mehmetfurkan", description: "Benzersiz kullanıcı adı (sparse unique)" }
+        profilePhoto: { type: string, example: "", description: "Profil fotoğrafı URL'i" }
+        coverPhoto: { type: string, example: "", description: "Kapak fotoğrafı URL'i" }
+        bio: { type: string, maxLength: 160, example: "Ev yemekleri tutkunu." }
+        city: { type: string, example: "İstanbul" }
+        gender:
+          type: string
+          enum: ["Kadın", "Erkek", "Belirtmek İstemiyorum"]
+        birthDate: { type: string, format: date }
+        followersCount: { type: integer, default: 0 }
+        followingCount: { type: integer, default: 0 }
+        recipesCount: { type: integer, default: 0 }
         preferences:
           type: object
           properties:
@@ -803,13 +1048,17 @@ components:
               type: array
               items:
                 type: string
-                enum: [Vegan, Vejetaryen, Keto, Glutensiz, Laktozsuz]
+                enum: [Vegan, Vejetaryen, Vejeteryan, Keto, Glutensiz, Laktozsuz, Helal, "Düşük Karbonhidrat"]
             allergies:
               type: array
               items: { type: string }
         favorites:
           type: array
           items: { type: string }
+        savedRecipes:
+          type: array
+          items: { type: string }
+          description: "Kaydedilen (bookmark) tariflerin ObjectId listesi"
         createdAt: { type: string, format: date-time }
 
     Recipe:
@@ -817,6 +1066,11 @@ components:
       properties:
         _id: { type: string }
         title: { type: string }
+        status:
+          type: string
+          enum: ["draft", "published"]
+          default: "draft"
+          description: "Taslak mı yayınlanmış mı (Görev 6 — Tariflerim/Taslaklar sekmeleri)"
         description: { type: string }
         ingredients:
           type: array
