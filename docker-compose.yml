@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # --- MongoDB ---
   mongo:
@@ -12,6 +10,14 @@ services:
       - mongo_data:/data/db
     environment:
       MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-nightcodekitchen}
+    # Healthcheck: Mongo gerçekten bağlantı kabul etmeye hazır olunca "healthy"
+    # olur. Backend bu duruma kadar bekler (aşağıdaki depends_on condition).
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   # --- Backend API ---
   backend:
@@ -23,7 +29,9 @@ services:
     ports:
       - "5001:5001"
     depends_on:
-      - mongo
+      mongo:
+        # Race condition fix: backend yalnızca mongo "healthy" olunca başlar.
+        condition: service_healthy
     env_file:
       - ./backend/.env
     environment:
