@@ -2,9 +2,10 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
 // JWT Token oluşturma yardımcı fonksiyonu
-const generateToken = (id) => {
+const generateToken = (id, rememberMe = false) => {
+  const expiresIn = rememberMe ? "30d" : (process.env.JWT_EXPIRE || "1d");
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE,
+    expiresIn,
   });
 };
 
@@ -39,7 +40,7 @@ const registerUser = async (req, res, next) => {
 // @desc    Kullanıcı girişi (İsmini authUser yaptık ki rotayla eşleşsin)
 const authUser = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, rememberMe } = req.body;
 
     const user = await User.findOne({ email }).select("+password");
 
@@ -59,7 +60,7 @@ const authUser = async (req, res, next) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        token: generateToken(user._id),
+        token: generateToken(user._id, rememberMe),
       },
     });
   } catch (error) {
