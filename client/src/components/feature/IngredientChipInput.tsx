@@ -10,22 +10,23 @@ interface IngredientChipInputProps {
 export function IngredientChipInput({
   ingredients,
   onChange,
-  placeholder = "Malzeme yaz, Enter ile ekle…",
+  placeholder = "Malzeme yaz, Enter veya virgül ile ekle (örn: nar ekşisi)…",
   className = "",
 }: IngredientChipInputProps) {
   const [inputValue, setInputValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   /**
-   * Ham metni virgül ve boşluk karakterlerinden bölerek
-   * her bir kelimeyi ayrı malzeme olarak ekler.
-   * Boş stringler ve tekrar eden malzemeler engellenir.
+   * Ham metni virgülden bölerek her parçayı ayrı malzeme olarak ekler.
+   * Boşluklar parça içinde korunur ("nar ekşisi", "kırmızı biber" gibi
+   * compound malzemeler tek etiket olarak girilebilir).
+   * Boş parçalar ve tekrar edenler engellenir.
    */
   function addIngredients(raw: string) {
-    // Virgül veya boşluktan böl
+    // Sadece virgülden böl — boşluk parça içinde kalır
     const parts = raw
-      .split(/[,\s]+/)
-      .map((s) => s.trim().toLowerCase())
+      .split(",")
+      .map((s) => s.trim().toLowerCase().replace(/\s+/g, " "))
       .filter((s) => s.length > 0);
 
     if (parts.length === 0) {
@@ -54,15 +55,6 @@ export function IngredientChipInput({
       addIngredients(inputValue);
       return;
     }
-    // Boşluk tuşu: mevcut kelimeyi bitir ve yeni malzeme olarak ekle
-    if (e.key === " ") {
-      const trimmed = inputValue.trim();
-      if (trimmed) {
-        e.preventDefault();
-        addIngredients(trimmed);
-      }
-      return;
-    }
     // Backspace ile son chip'i sil (input boşsa)
     if (e.key === "Backspace" && inputValue === "" && ingredients.length > 0) {
       removeIngredient(ingredients.length - 1);
@@ -70,16 +62,17 @@ export function IngredientChipInput({
   }
 
   /**
-   * Kopyala-yapıştır: yapıştırılan metin virgül veya boşluk içeriyorsa
-   * otomatik olarak ayrıştır ve ayrı etiketler olarak ekle.
+   * Kopyala-yapıştır: yapıştırılan metin virgül içeriyorsa otomatik olarak
+   * ayrıştır ve ayrı etiketler olarak ekle. Boşluk içeren tek kelimelik metin
+   * (örn "nar ekşisi") tek etikete dönüşür.
    */
   function handlePaste(e: ClipboardEvent<HTMLInputElement>) {
     const pasted = e.clipboardData.getData("text");
-    if (pasted.includes(",") || pasted.includes(" ")) {
+    if (pasted.includes(",")) {
       e.preventDefault();
       addIngredients(pasted);
     }
-    // Tek kelime yapıştırıldıysa normal davranışa izin ver
+    // Virgül yoksa normal davranışa izin ver — kullanıcı çoklu kelime yazabilir
   }
 
   return (
