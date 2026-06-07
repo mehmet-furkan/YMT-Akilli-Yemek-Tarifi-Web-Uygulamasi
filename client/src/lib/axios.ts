@@ -8,16 +8,14 @@ const apiClient = axios.create({
   timeout: 10_000,
 });
 
-// Token sessionStorage'da tutulur — AuthContext ile birebir aynı kaynak.
-// (Daha önce burada localStorage kullanılıyordu; AuthContext sessionStorage'a
-// geçince uyumsuzluk oluştu: login sonrası token bulunamayıp 401 + login'e
-// geri atılıyordu. Tek kaynak: sessionStorage.)
+// Token localStorage'da tutulur — AuthContext ile birebir aynı kaynak.
+// Tüm sekmelerde oturum kalıcı olarak korunur.
 const TOKEN_KEY = "token";
 
 // ── Request Interceptor ──
 apiClient.interceptors.request.use(
   (config) => {
-    const token = sessionStorage.getItem(TOKEN_KEY);
+    const token = localStorage.getItem(TOKEN_KEY);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -32,7 +30,7 @@ apiClient.interceptors.response.use(
   (error) => {
     // 401 → token expired / invalid
     if (error.response?.status === 401) {
-      sessionStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(TOKEN_KEY);
       window.location.href = "/login";
     }
     return Promise.reject(error);

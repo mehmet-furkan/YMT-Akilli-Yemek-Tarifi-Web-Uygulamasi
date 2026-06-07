@@ -57,23 +57,39 @@ export interface AuthContextValue {
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
-// ─── Token helpers ────────────────────────────────────────────────────────────
+// ─── Storage helpers ──────────────────────────────────────────────────────────
 
 const TOKEN_KEY = "token";
+const USER_KEY = "user";
 
-// NOTE: We use sessionStorage (not localStorage) so the JWT survives page
-// refreshes but is cleared when the browser tab is closed. This way users
-// must log in again every time they re-open the app — per product requirement.
+// localStorage kullanarak JWT ve kullanıcı verisini tüm sekmelerde kalıcı tutuyoruz.
 function getStoredToken(): string | null {
-  return sessionStorage.getItem(TOKEN_KEY);
+  return localStorage.getItem(TOKEN_KEY);
 }
 
 function setStoredToken(token: string): void {
-  sessionStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(TOKEN_KEY, token);
 }
 
 function removeStoredToken(): void {
-  sessionStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(TOKEN_KEY);
+}
+
+function getStoredUser(): User | null {
+  try {
+    const raw = localStorage.getItem(USER_KEY);
+    return raw ? (JSON.parse(raw) as User) : null;
+  } catch {
+    return null;
+  }
+}
+
+function setStoredUser(user: User): void {
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
+}
+
+function removeStoredUser(): void {
+  localStorage.removeItem(USER_KEY);
 }
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
@@ -83,9 +99,19 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUserState] = useState<User | null>(getStoredUser);
   const [token, setToken] = useState<string | null>(getStoredToken);
   const [isLoading, setIsLoading] = useState<boolean>(!!getStoredToken());
+
+  // User state'i güncellendiğinde localStorage'ı da senkronize et
+  const setUser = useCallback((u: User | null) => {
+    setUserState(u);
+    if (u) {
+      setStoredUser(u);
+    } else {
+      removeStoredUser();
+    }
+  }, []);
 
   // Uygulama açıldığında mevcut token varsa kullanıcı bilgilerini çek
   useEffect(() => {
@@ -101,8 +127,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       .catch(() => {
         // Token geçersiz veya süresi dolmuş → temizle
         removeStoredToken();
+        removeStoredUser();
         setToken(null);
-        setUser(null);
+        setUserState(null);
       })
       .finally(() => setIsLoading(false));
   }, []); // Sadece mount sırasında çalışır
@@ -126,8 +153,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = useCallback(() => {
     removeStoredToken();
+    removeStoredUser();
     setToken(null);
-    setUser(null);
+    setUserState(null);
   }, []);
 
   // ── me ─────────────────────────────────────────────────────────────────────

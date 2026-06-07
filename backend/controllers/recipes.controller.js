@@ -2,6 +2,88 @@ const Recipe = require("../models/Recipe");
 const asyncHandler = require("../lib/asyncHandler");
 
 // ─────────────────────────────────────────────
+// Akıllı Malzeme Sözlüğü (Ingredient Dictionary)
+// Bir anahtar kelime arandığında ilişkili tüm malzemeleri de arar.
+// ─────────────────────────────────────────────
+const INGREDIENT_DICTIONARY = {
+  // Et türleri
+  et: ["et", "dana eti", "kuzu eti", "dana kuşbaşı", "kuşbaşı", "kıyma", "kavurma", "biftek", "antrikot", "bonfile", "pirzola", "sucuk", "pastırma", "sığır eti"],
+  kıyma: ["kıyma", "dana kıyma", "kuzu kıyma", "karışık kıyma"],
+  kuşbaşı: ["kuşbaşı", "dana kuşbaşı", "kuzu kuşbaşı"],
+
+  // Tavuk & kanatlı
+  tavuk: ["tavuk", "tavuk göğsü", "tavuk but", "tavuk kanat", "kanat", "tavuk baget", "tavuk eti", "piliç", "piliç göğsü", "tavuk köfte"],
+  hindi: ["hindi", "hindi eti", "hindi göğsü", "hindi but"],
+
+  // Balık & deniz ürünleri
+  balık: ["balık", "levrek", "çipura", "somon", "hamsi", "palamut", "lüfer", "mezgit", "alabalık", "ton balığı", "sardalya"],
+  "deniz ürünleri": ["deniz ürünleri", "karides", "midye", "kalamar", "ahtapot", "istakoz"],
+  karides: ["karides", "jumbo karides", "deniz ürünleri"],
+
+  // Süt ürünleri
+  peynir: ["peynir", "beyaz peynir", "kaşar peyniri", "tulum peyniri", "lor peyniri", "çökelek", "labne", "hellim", "mozarella", "parmesan", "cheddar", "cream cheese"],
+  süt: ["süt", "tam yağlı süt", "yarım yağlı süt", "yağsız süt"],
+  yoğurt: ["yoğurt", "süzme yoğurt", "homojen yoğurt"],
+  krema: ["krema", "süt kreması", "sıvı krema", "çikolatalı krema"],
+  tereyağı: ["tereyağı", "margarin", "sadeyağ"],
+
+  // Sebzeler
+  domates: ["domates", "cherry domates", "domates salçası", "domates suyu", "konserve domates"],
+  biber: ["biber", "sivri biber", "dolmalık biber", "çarliston biber", "kapya biber", "kırmızı biber", "yeşil biber", "acı biber", "pul biber"],
+  patlıcan: ["patlıcan", "kemer patlıcan", "bostan patlıcan"],
+  kabak: ["kabak", "sakız kabağı", "bal kabağı", "balkabağı"],
+  patates: ["patates", "bebek patates", "tatlı patates"],
+  soğan: ["soğan", "kuru soğan", "yeşil soğan", "arpacık soğan", "taze soğan"],
+  sarımsak: ["sarımsak", "sarımsak dişi"],
+  havuç: ["havuç", "bebek havuç"],
+  ıspanak: ["ıspanak", "bebek ıspanak"],
+  fasulye: ["fasulye", "taze fasulye", "kuru fasulye", "barbunya", "börülce"],
+  bezelye: ["bezelye", "taze bezelye", "konserve bezelye"],
+  mercimek: ["mercimek", "kırmızı mercimek", "yeşil mercimek"],
+  nohut: ["nohut", "konserve nohut"],
+  bulgur: ["bulgur", "ince bulgur", "pilavlık bulgur"],
+  makarna: ["makarna", "spagetti", "penne", "erişte", "şehriye", "lazanya", "fettuccine"],
+
+  // Baharatlar
+  baharat: ["baharat", "karabiber", "kimyon", "kekik", "pul biber", "sumak", "tarçın", "zerdeçal", "köri", "zencefil", "defne yaprağı", "nane", "maydanoz", "dereotu"],
+
+  // Tahıllar & unlar
+  un: ["un", "buğday unu", "tam buğday unu", "mısır unu", "nişasta", "galeta unu"],
+  pirinç: ["pirinç", "baldo pirinç", "basmati pirinç", "jasmine pirinç"],
+  ekmek: ["ekmek", "bayat ekmek", "pide", "lavaş", "bazlama", "yufka"],
+
+  // Yağlar
+  yağ: ["yağ", "zeytinyağı", "sıvı yağ", "ayçiçek yağı", "mısırözü yağı", "tereyağı", "fındık yağı", "susam yağı"],
+  zeytinyağı: ["zeytinyağı", "sızma zeytinyağı", "riviera zeytinyağı"],
+};
+
+/**
+ * Verilen bir anahtar kelimeyi sözlükteki eş anlamlılarla genişletir.
+ * Eğer sözlükte yoksa orijinal kelimeyi döndürür.
+ * @param {string} keyword - Aranacak anahtar kelime
+ * @returns {string[]} - Genişletilmiş malzeme listesi
+ */
+function expandIngredient(keyword) {
+  const lower = keyword.toLowerCase().trim();
+
+  // 1) Doğrudan sözlükte anahtar olarak var mı?
+  if (INGREDIENT_DICTIONARY[lower]) {
+    return INGREDIENT_DICTIONARY[lower];
+  }
+
+  // 2) Sözlükteki herhangi bir grubun değerlerinde var mı?
+  //    (ör. "kuşbaşı" aranırsa "et" grubundan tüm eşleşmeleri getir)
+  for (const [, synonyms] of Object.entries(INGREDIENT_DICTIONARY)) {
+    if (synonyms.some((s) => s === lower)) {
+      return synonyms;
+    }
+  }
+
+  // 3) Sözlükte bulunamadı → orijinal kelimeyi döndür
+  return [lower];
+}
+
+// ─────────────────────────────────────────────
 // GET /api/recipes
 // Tarifleri listele — arama, filtreleme, sayfalama
 // ─────────────────────────────────────────────
@@ -24,12 +106,27 @@ const getRecipes = asyncHandler(async (req, res) => {
 
   // 2) Malzeme filtresi — ?ingredient=domates&ingredient=biber
   //    Birden fazla ingredient → $all (tüm malzemeler olsun)
+  //    Akıllı sözlük ile genişletilmiş arama
   if (ingredient) {
     const ingredients = Array.isArray(ingredient) ? ingredient : [ingredient];
-    // Case-insensitive ve word-boundary (tam kelime) regex ile eşleştirme (Türkçe uyumlu)
     const boundary = "[^a-zA-Z0-9çğıöşüÇĞIÖŞÜ]";
+
     filter["ingredients.name"] = {
-      $all: ingredients.map((i) => new RegExp(`(^|${boundary})${i}(${boundary}|$)`, "i")),
+      $all: ingredients.map((i) => {
+        // Sözlükten genişletilmiş terimler
+        const expanded = expandIngredient(i);
+
+        if (expanded.length === 1) {
+          // Tek terim — orijinal regex davranışı
+          return new RegExp(`(^|${boundary})${expanded[0]}(${boundary}|$)`, "i");
+        }
+
+        // Birden fazla eş anlamlı → (terim1|terim2|...) şeklinde OR regex
+        const alternation = expanded
+          .map((term) => `(^|${boundary})${term}(${boundary}|$)`)
+          .join("|");
+        return new RegExp(alternation, "i");
+      }),
     };
   }
 
@@ -174,6 +271,7 @@ const getRandomRecipe = asyncHandler(async (req, res) => {
 // ─────────────────────────────────────────────
 // POST /api/recipes/search-by-ingredients
 // Malzemelere göre tarif ara — eşleşme skoruyla (Public)
+// Akıllı sözlük ile genişletilmiş arama
 // ─────────────────────────────────────────────
 const searchByIngredients = asyncHandler(async (req, res) => {
   const { ingredients } = req.body;
@@ -183,7 +281,12 @@ const searchByIngredients = asyncHandler(async (req, res) => {
     throw new Error("En az bir malzeme girilmelidir");
   }
 
-  const searchIngs = ingredients.map((i) => String(i).toLowerCase());
+  // Her bir arama terimini sözlükle genişlet
+  const searchIngs = ingredients.map((i) => String(i).toLowerCase().trim());
+  const expandedSearchIngs = searchIngs.flatMap((i) => expandIngredient(i));
+  // Tekrarları kaldır
+  const uniqueExpandedIngs = [...new Set(expandedSearchIngs)];
+
   const allRecipes = await Recipe.find().populate("createdBy", "name");
 
   // Tam kelime eşleşmesi için yardımcı fonksiyon (Türkçe karakter destekli)
@@ -197,14 +300,16 @@ const searchByIngredients = asyncHandler(async (req, res) => {
   const scored = allRecipes
     .map((recipe) => {
       const recipeIngs = recipe.ingredients.map((i) => i.name.toLowerCase());
-      const matchedCount = searchIngs.filter((si) =>
+
+      // Genişletilmiş terimlerle eşleşme kontrolü
+      const matchedCount = uniqueExpandedIngs.filter((si) =>
         recipeIngs.some((ri) => isExactMatch(ri, si))
       ).length;
 
       const required = recipe.ingredients.filter((i) => !i.optional);
       const missing = required.filter(
         (i) =>
-          !searchIngs.some(
+          !uniqueExpandedIngs.some(
             (si) => isExactMatch(i.name.toLowerCase(), si)
           )
       );
@@ -238,3 +343,4 @@ module.exports = {
   deleteRecipe,
   searchByIngredients,
 };
+
