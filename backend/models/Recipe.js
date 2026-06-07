@@ -109,6 +109,19 @@ const RecipeSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    // Cache: Comment koleksiyonundan recomputeRecipeRating ile hesaplanır.
+    // Liste sayfalarının ek aggregate çağrısı yapmamasi için denormalize edilir.
+    averageRating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    ratingsCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   {
     timestamps: true,
@@ -125,5 +138,7 @@ RecipeSchema.index({ category: 1 });
 RecipeSchema.index({ cookTime: 1 });
 RecipeSchema.index({ difficulty: 1 });
 RecipeSchema.index({ tags: 1 });
+// Rating'e göre sıralama (en yüksek puanlı tarifler listesi için)
+RecipeSchema.index({ averageRating: -1 });
 
 module.exports = mongoose.model("Recipe", RecipeSchema);

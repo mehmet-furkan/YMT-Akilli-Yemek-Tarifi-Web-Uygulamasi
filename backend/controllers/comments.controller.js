@@ -1,5 +1,6 @@
 const Comment = require("../models/Comment");
 const asyncHandler = require("../lib/asyncHandler");
+const { recomputeRecipeRating } = require("../services/rating.service");
 
 // ─────────────────────────────────────────────
 // GET /api/recipes/:id/comments
@@ -32,6 +33,8 @@ const createComment = asyncHandler(async (req, res) => {
       text,
     });
     await comment.populate("userId", "name");
+    // Recipe.averageRating / ratingsCount cache'ini güncelle
+    await recomputeRecipeRating(req.params.id);
     res.status(201).json({ success: true, data: comment });
   } catch (err) {
     // Compound unique index — aynı kullanıcı aynı tarife tek yorum
@@ -60,7 +63,10 @@ const deleteComment = asyncHandler(async (req, res) => {
     throw new Error("Bu yorumu silme yetkiniz yok");
   }
 
+  const { recipeId } = comment;
   await comment.deleteOne();
+  // Recipe.averageRating / ratingsCount cache'ini güncelle
+  await recomputeRecipeRating(recipeId);
 
   // OpenAPI spec: 204 No Content (favorites delete ile aynı pattern)
   res.status(204).send();
