@@ -28,10 +28,14 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // 401 → token expired / invalid
+    // 401 → token expired / invalid (gerçek sunucu yanıtı, network hatası değil)
     if (error.response?.status === 401) {
       localStorage.removeItem(TOKEN_KEY);
-      window.location.href = "/login";
+      localStorage.removeItem("user");
+      // Login sayfasında değilsek yönlendir (sonsuz döngüyü önle)
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   }

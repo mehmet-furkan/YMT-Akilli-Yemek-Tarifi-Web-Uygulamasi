@@ -124,12 +124,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     apiClient
       .get<ApiResponse<User>>("/auth/me")
       .then((res) => setUser(res.data.data))
-      .catch(() => {
-        // Token geçersiz veya süresi dolmuş → temizle
-        removeStoredToken();
-        removeStoredUser();
-        setToken(null);
-        setUserState(null);
+      .catch((err) => {
+        // Sadece 401 (token geçersiz/süresi dolmuş) → temizle
+        // Network hatası veya 5xx → mevcut localStorage verisiyle devam et
+        if (err.response?.status === 401) {
+          removeStoredToken();
+          removeStoredUser();
+          setToken(null);
+          setUserState(null);
+        }
+        // Diğer hatalar (network, 500, vb.): localStorage'daki user kalır
       })
       .finally(() => setIsLoading(false));
   }, []); // Sadece mount sırasında çalışır
