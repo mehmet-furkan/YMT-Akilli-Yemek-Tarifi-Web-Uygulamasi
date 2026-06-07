@@ -4,12 +4,16 @@ const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const hpp = require("hpp");
+const path = require("path");
 
 const connectDB = require("./config/db");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
+const logger = require("./utils/logger");
+const { initSentry } = require("./lib/sentry");
 
 // Yapılandırma
 dotenv.config();
+initSentry(); // Sadece production + SENTRY_DSN varsa devreye girer
 connectDB();
 
 const app = express();
@@ -40,6 +44,10 @@ app.use(cors({
   credentials: true
 }));
 
+// --- 🖼️ STATİK GÖRSELLER ---
+// downloadImages.js ile indirilen tarif görselleri buradan servis edilir.
+app.use("/images", express.static(path.join(__dirname, "public", "images")));
+
 // --- 🚀 ROTALAR ---
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
@@ -62,6 +70,6 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
-  console.log(`\n🚀 Sunucu ${PORT} portunda aktif.`);
-  console.log(`🛡️ Güvenlik Modernize Edildi: Helmet, HPP ve Rate Limit devrede.\n`);
+  logger.info(`Sunucu ${PORT} portunda aktif.`);
+  logger.info("Güvenlik katmanları devrede: Helmet, HPP, Rate Limit.");
 });
