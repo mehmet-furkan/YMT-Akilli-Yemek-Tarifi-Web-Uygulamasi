@@ -72,6 +72,19 @@ npm run dev             # http://localhost:5001
 > node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 > ```
 
+#### Görselleri İndirme (Local Setup)
+
+Tarif görselleri Pixabay'den çekiliyor ve direkt URL'ler ~24 saat sonra geçersiz
+oluyor. Görselleri kalıcı olarak kendi sunucunuza indirmek için (tarifler
+seed'lendikten sonra) backend klasöründe şu komutu çalıştırın:
+
+```bash
+npm run images:download
+```
+
+Görseller `backend/public/images/` altına iner (git'e girmez) ve `/images/...`
+yolundan servis edilir.
+
 ---
 
 ### 2. Client Kurulumu

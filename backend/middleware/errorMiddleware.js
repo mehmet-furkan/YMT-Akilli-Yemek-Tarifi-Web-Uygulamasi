@@ -1,3 +1,6 @@
+const logger = require("../utils/logger");
+const { Sentry } = require("../lib/sentry");
+
 // Bulunamayan route'lar için 404 handler
 const notFound = (req, res, next) => {
   const error = new Error(`Bulunamadı - ${req.originalUrl}`);
@@ -29,6 +32,15 @@ const errorHandler = (err, req, res, next) => {
   if (err.code === 11000) {
     statusCode = 400;
     message = "Bu kayıt zaten mevcut";
+  }
+
+  // Sunucu hatalarını (5xx) logla + Sentry'ye gönder. 4xx (client hatası) gürültü
+  // olmasın diye yalnızca warn seviyesinde loglanır.
+  if (statusCode >= 500) {
+    logger.error(`${statusCode} ${req.method} ${req.originalUrl}`, { stack: err.stack });
+    Sentry.captureException(err);
+  } else {
+    logger.warn(`${statusCode} ${req.method} ${req.originalUrl} - ${message}`);
   }
 
   res.status(statusCode).json({

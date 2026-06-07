@@ -1,0 +1,25 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Backend Kurulum ve Test
+        run: |
+          cd backend
+          npm ci
+          npm test
+
+      - name: Frontend Kurulum ve Build
+        run: |
+          cd client
+          npm ci
+          npm run build
