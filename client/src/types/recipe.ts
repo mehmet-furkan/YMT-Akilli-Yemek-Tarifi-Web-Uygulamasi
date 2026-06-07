@@ -45,6 +45,8 @@ export interface Recipe {
   nutrition?: RecipeNutrition; // C.1: besin değerleri — enrichNutrition.js ile doldurulur
   imageUrl?: string;          // opsiyonel
   createdBy: string | { _id: string; name: string };
+  averageRating?: number;     // Comment'lerden hesaplanan cache, 0–5
+  ratingsCount?: number;      // Toplam puanlama sayısı
   createdAt?: string;
   updatedAt?: string;
 }
