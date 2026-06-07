@@ -7,6 +7,19 @@ import type { RecommendationResult } from "../types/recipe";
 
 const MIN_INGREDIENTS = 3;
 
+// ─── Kategori seçenekleri ───────────────────────────────────────────────────
+
+const CATEGORIES = [
+  { label: "Tüm Kategoriler", value: null, emoji: "🍽️" },
+  { label: "Ana Yemek", value: "Ana Yemek", emoji: "🥘" },
+  { label: "Tatlı", value: "Tatlı", emoji: "🍰" },
+  { label: "Çorba", value: "Çorba", emoji: "🍲" },
+  { label: "Kahvaltı", value: "Kahvaltı", emoji: "🍳" },
+  { label: "Salata", value: "Salata", emoji: "🥗" },
+  { label: "Atıştırmalık", value: "Atıştırmalık", emoji: "🍿" },
+  { label: "İçecek", value: "İçecek", emoji: "🥤" },
+] as const;
+
 // ─── Toast bileşeni ────────────────────────────────────────────────────────
 
 function Toast({
@@ -124,6 +137,7 @@ function ResultCard({ result }: { result: RecommendationResult }) {
 export default function RecommendationPage() {
   const { user } = useAuth();
   const [ingredients, setIngredients] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [toastVisible, setToastVisible] = useState(false);
   const { mutate, data, isPending, isSuccess } = useRecommendations();
 
@@ -142,7 +156,7 @@ export default function RecommendationPage() {
       return;
     }
     const dietaryPreferences = user?.preferences?.diet ?? [];
-    mutate({ ingredients, dietaryPreferences });
+    mutate({ ingredients, dietaryPreferences, category: selectedCategory });
   }
 
   return (
@@ -189,6 +203,38 @@ export default function RecommendationPage() {
               </p>
             )}
           </div>
+
+          {/* ── Kategori Filtresi ── */}
+          <div className="space-y-2 pt-1">
+            <label className="block text-sm font-medium text-stone-600">
+              Kategori
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIES.map((cat) => {
+                const isActive = selectedCategory === cat.value;
+                return (
+                  <button
+                    key={cat.label}
+                    type="button"
+                    onClick={() => setSelectedCategory(cat.value)}
+                    className={`
+                      inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium
+                      border transition-all duration-200 cursor-pointer select-none
+                      ${
+                        isActive
+                          ? "bg-amber-500 text-white border-amber-500 shadow-sm shadow-amber-200"
+                          : "bg-white text-stone-600 border-stone-200 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700"
+                      }
+                    `}
+                  >
+                    <span className="text-base leading-none">{cat.emoji}</span>
+                    {cat.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <button
             onClick={handleSubmit}
             disabled={isInsufficient || isPending}
@@ -215,7 +261,7 @@ export default function RecommendationPage() {
                 Maalesef eşleşme bulunamadı
               </p>
               <p className="text-sm mt-1">
-                Daha fazla malzeme ekle ve tekrar dene
+                Daha fazla malzeme ekle veya farklı bir kategori dene
               </p>
             </div>
           )}
@@ -224,6 +270,11 @@ export default function RecommendationPage() {
             <>
               <h2 className="text-sm font-medium text-stone-500 mb-4">
                 {results.length} öneri bulundu
+                {selectedCategory && (
+                  <span className="ml-1 text-amber-600">
+                    — {selectedCategory}
+                  </span>
+                )}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {results.map((result) => (
@@ -251,3 +302,4 @@ export default function RecommendationPage() {
     </main>
   );
 }
+
