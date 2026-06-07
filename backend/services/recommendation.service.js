@@ -58,11 +58,14 @@ const isExcluded = (name) =>
  *
  * @param {string[]} userIngredients - Kullanıcının girdiği malzeme isimleri
  * @param {string[]} [dietaryPreferences=[]] - Kullanıcının diyet tercihleri
- * @param {number}   [limit=20]      - Döndürülecek maksimum tarif sayısı
- * @param {number}   [minScore=20]   - Minimum eşleşme skoru (0 – 100)
+ * @param {object}   [options={}]    - Ek filtre seçenekleri
+ * @param {string}   [options.category] - Kategori filtresi (ör. "Ana Yemek", "Çorba")
+ * @param {number}   [options.limit=20]      - Döndürülecek maksimum tarif sayısı
+ * @param {number}   [options.minScore=20]   - Minimum eşleşme skoru (0 – 100)
  * @returns {Promise<Array>} Sıralanmış öneri nesneleri
  */
-const getRecommendations = async (userIngredients, dietaryPreferences = [], limit = 20, minScore = 20) => {
+const getRecommendations = async (userIngredients, dietaryPreferences = [], options = {}) => {
+  const { category, limit = 20, minScore = 20 } = options;
   if (!userIngredients || userIngredients.length === 0) {
     return [];
   }
@@ -93,6 +96,11 @@ const getRecommendations = async (userIngredients, dietaryPreferences = [], limi
       $in: normalizedUser.map((u) => new RegExp(`(^|${boundary})${u}(${boundary}|$)`, "i")),
     },
   };
+
+  // 2b. Kategori filtresi — belirtilmişse doğrudan MongoDB sorgusuna ekle
+  if (category && category.trim()) {
+    query.category = category.trim();
+  }
 
   // 3. Hard filter: Dışlanacak kelimeler varsa $not ile pipeline'ın en başında ekarte et
   if (excludedKeywords.size > 0) {
