@@ -170,7 +170,7 @@ describe("recommendation.service — getRecommendations", () => {
     const result = await getRecommendations(
       ["domates", "biber", "yumurta", "soğan", "kırmızı mercimek", "havuç", "tuz"],
       [], // dietaryPreferences
-      2 // limit
+      { limit: 2 } // options
     );
     expect(result.length).toBeLessThanOrEqual(2);
   });
