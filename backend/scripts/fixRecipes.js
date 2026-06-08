@@ -492,6 +492,51 @@ const FIXES = [
     },
   },
 
+  // ── Çiğ Köfte (Etsiz) — klasik Urfa usulü baharatlar eklendi
+  // Mevcut: 13 malzeme. Karabiber, pul biber, sumak, sarımsak, toz kırmızı
+  // biber, domates rendesi yoktu. Klasik Urfa usulü çiğ köfte bu baharatlarla
+  // yoğrulur. Bulguru sıcak suyla bekletme + isot/pul biberi sıvı yağda
+  // çözme + soğan-domates rendelerinin suyunu sıkma teknikleri eklendi.
+  // Kaynak: yemek.com araması (yemek.com/tarif/etsiz-cig-kofte/)
+  {
+    title: "Çiğ Köfte (Etsiz)",
+    replaceInstructions: [
+      "Ince bulguru derin bir kâseye alın, üzerine sıcak suyu döküp kapağını kapatın ve 15 dakika dinlendirin (bulgur kabarsın).",
+      "Küçük bir kâsede isot ve pul biberi 2 yemek kaşığı sıvı yağla karıştırarak çözün — bu aromayı serbest bırakır.",
+      "Soğanı ve domatesi ayrı ayrı rendeleyip avucunuzda sıkarak fazla sularını süzün.",
+      "Sarımsağı ezin, maydanozu ince kıyın.",
+      "Kabarmış bulgura salça, biber salçası, çözünmüş baharat karışımı, sarımsak, soğan rendesi ve domates rendesini ekleyin.",
+      "Karabiber, kimyon, toz kırmızı biber, sumak ve tuzu serpip 15-20 dakika el ile yoğurun (kıvam alana kadar).",
+      "Kalan zeytinyağı, nar ekşisi ve maydanozu katıp son kez harmanlayın.",
+      "Elinizle uzunca köfte şekilleri verin, marul yapraklarının üstünde limon ile servis edin.",
+    ],
+    updates: {
+      prepTime: 60,
+      cookTime: 1,
+      ingredients: [
+        { name: "köftelik ince bulgur", amount: "2", unit: "su bardağı" },
+        { name: "sıcak su", amount: "1.5", unit: "su bardağı" },
+        { name: "soğan", amount: "1", unit: "adet" },
+        { name: "domates", amount: "1", unit: "adet" },
+        { name: "sarımsak", amount: "3", unit: "diş" },
+        { name: "domates salçası", amount: "2", unit: "yemek kaşığı" },
+        { name: "biber salçası", amount: "1", unit: "yemek kaşığı" },
+        { name: "isot biberi", amount: "1", unit: "yemek kaşığı" },
+        { name: "pul biber", amount: "1", unit: "tatlı kaşığı" },
+        { name: "toz kırmızı biber", amount: "1", unit: "tatlı kaşığı" },
+        { name: "karabiber", amount: "1", unit: "çay kaşığı" },
+        { name: "kimyon", amount: "1", unit: "tatlı kaşığı" },
+        { name: "sumak", amount: "1", unit: "yemek kaşığı" },
+        { name: "nar ekşisi", amount: "2", unit: "yemek kaşığı" },
+        { name: "zeytinyağı", amount: "3", unit: "yemek kaşığı" },
+        { name: "maydanoz", amount: "0.5", unit: "demet" },
+        { name: "tuz", amount: "1", unit: "tatlı kaşığı" },
+        { name: "marul yaprağı (servis için)", amount: "5", unit: "adet" },
+        { name: "limon", amount: "1", unit: "adet" },
+      ],
+    },
+  },
+
   // ── #2 İskender — yemek.com'a göre içerik zenginleştirildi
   // Mevcut tarif sadece 5 malzemeydi (et, pide, yoğurt, domates sosu, tereyağı)
   // — domates sosu ve et marinasyonu için detay eksikti.
