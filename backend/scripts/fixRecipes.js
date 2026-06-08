@@ -1,0 +1,630 @@
+/**
+ * fixRecipes.js
+ *
+ * Mevcut tariflere targeted düzeltmeler uygular. seedRecipes.js'in aksine bu
+ * script tarifleri SİLMEZ — başlığa göre bulup belirli alanları güncelliyor.
+ * Idempotent: yeniden koşmak değer değiştirmez (aynı içeriği yeniden yazar).
+ *
+ * scripts/auditRecipes.js çıktısında "FIRIN: derece belirtilmemiş" veya
+ * "FIRIN: süre belirtilmemiş" hatası olan tarifler ele alındı. Kaynak:
+ * yemek.com (https://yemek.com).
+ *
+ * Run:
+ *   node scripts/fixRecipes.js              # gerçek update
+ *   node scripts/fixRecipes.js --dry-run    # ne değişeceğini göster, yazma
+ */
+
+require("dotenv").config();
+const mongoose = require("mongoose");
+const Recipe = require("../models/Recipe");
+
+const DRY_RUN = process.argv.includes("--dry-run");
+
+/**
+ * Her fix: { title, updates } veya { title, replaceInstructions: [...] }
+ * - `updates`: $set ile geçen kısmi field güncellemeleri
+ * - `replaceInstructions`: tüm instructions array'ini değiştirir
+ *   (cookTime/prepTime gibi field'lar updates üzerinden de gönderilebilir)
+ */
+const FIXES = [
+  // ── #50 Hünkar Beğendi — patlıcan fırınlama 200°C, 20 dk
+  // Kaynak: https://yemek.com (Hünkar Beğendi tarifi)
+  {
+    title: "Hünkar Beğendi",
+    replaceInstructions: [
+      "Eti soğanla kavurun, salça ve su ekleyip 1 saat pişirin.",
+      "Patlıcanları çatalla deldikten sonra 200°C önceden ısıtılmış fırında 20 dakika közleyin (veya doğrudan ocak alevinde).",
+      "Patlıcanları soğutup kabuğunu soyun ve ezerek püre yapın.",
+      "Tereyağında unu kavurun, patlıcanı ekleyip karıştırın.",
+      "Sıcak sütü yavaşça ekleyin, koyulaşınca peynir ve baharatı katın.",
+      "Beğendi sosunu tabağa yayıp üstüne yahniyi koyun ve sıcak servis edin.",
+    ],
+  },
+
+  // ── #66 Patlıcan Salatası — patlıcan közleme 200°C 40 dk
+  // Kaynak: https://yemek.com/tarif/patlican-salatasi/
+  {
+    title: "Patlıcan Salatası",
+    replaceInstructions: [
+      "Patlıcanları çatalla delip 200°C önceden ısıtılmış fırında 35-40 dakika közleyin (veya ocak ızgarasında doğrudan alevde).",
+      "Patlıcanları soğutup kabuğunu soyun ve püre haline getirin.",
+      "Yoğurt, ezilmiş sarımsak, limon suyu ve tuzu ekleyin.",
+      "Üstüne zeytinyağı gezdirip maydanoz serpin, soğuk servis edin.",
+    ],
+  },
+
+  // ── #73 Sütlaç — fırın 200°C 12-15 dk
+  // Kaynak: https://yemek.com/tarif/firin-sutlac/
+  {
+    title: "Sütlaç",
+    replaceInstructions: [
+      "Pirinci suda yumuşayana kadar 20 dakika haşlayın.",
+      "Sütü ekleyip kaynamaya bırakın, ara sıra karıştırın.",
+      "Şekeri katıp eritin, 10 dakika daha pişirin.",
+      "Az suyla açılmış nişastayı yavaşça karıştırarak ekleyin, kıvam alana kadar pişirin.",
+      "Vanilyayı ekleyip kâselere paylaştırın.",
+      "Önceden ısıtılmış 200°C fırında üzeri pembeleşene kadar 12-15 dakika fırınlayın.",
+      "Soğuduktan sonra üzerine tarçın serpip servis edin.",
+    ],
+    updates: { cookTime: 45 }, // 20 dk haşlama + 10 dk şeker + kıvam + 15 dk fırın
+  },
+
+  // ── Aşure — büyük rewrite, geleneksel malzemeleri ekledik
+  // Mevcut: 10 malzeme — pirinç, portakal/limon kabuğu, karanfil, elma,
+  // badem, fındık, antep fıstığı, nar yoktu. Yemek.com'un 15 kişilik tarifini
+  // 8 kişilik ev versiyonuna oranlayıp ekledim.
+  // Kaynak: https://yemek.com/tarif/asure/
+  {
+    title: "Aşure",
+    replaceInstructions: [
+      "Aşurelik buğdayı yıkayıp 8-12 saat soğuk suda bekletin.",
+      "Bekleyen buğdayı suyunu süzüp 2 litre sıcak suda 1-1.5 saat kısık ateşte yumuşayana kadar pişirin.",
+      "Pirinç, portakal kabuğu, limon kabuğu ve 1 litre sıcak su ekleyip 20 dakika daha pişirin.",
+      "Karanfilleri ayrı bir kâsede 1 su bardağı suyla kaynatıp süzün (karanfil suyu).",
+      "Haşlanmış nohut ve fasulyeyi tencereye ekleyin.",
+      "Dilimlenmiş elma, kuru üzüm, kuş üzümü, doğranmış kuru incir ve kayısıyı ekleyip 20 dakika pişirin.",
+      "Şekeri ve süzülmüş karanfil suyunu katın, 15 dakika daha kaynatın.",
+      "Ocaktan alıp 1-2 saat oda sıcaklığında ılınmaya bırakın (kıvam alır).",
+      "Kâselere paylaştırın. Üzerine ceviz, badem, antep fıstığı serpip tarçınla süsleyin.",
+      "İsteğe bağlı nar tanesi ve susam serperek servis edin.",
+    ],
+    updates: {
+      prepTime: 720, // 12 saat bekleme
+      cookTime: 165, // 1.5 sa buğday + 20 dk + 20 dk + 15 dk
+      ingredients: [
+        // Ana taneli/baklagil
+        { name: "aşurelik buğday", amount: "1", unit: "su bardağı" },
+        { name: "pirinç", amount: "3", unit: "yemek kaşığı" },
+        { name: "haşlanmış nohut", amount: "0.5", unit: "su bardağı" },
+        { name: "haşlanmış kuru fasulye", amount: "0.5", unit: "su bardağı" },
+        // Aroma
+        { name: "portakal kabuğu rendesi", amount: "1", unit: "yemek kaşığı" },
+        { name: "limon kabuğu rendesi", amount: "1", unit: "yemek kaşığı" },
+        { name: "karanfil", amount: "5", unit: "adet" },
+        // Meyve
+        { name: "elma", amount: "1", unit: "adet" },
+        { name: "kuru üzüm", amount: "2", unit: "yemek kaşığı" },
+        { name: "kuş üzümü", amount: "2", unit: "yemek kaşığı" },
+        { name: "kuru incir", amount: "5", unit: "adet" },
+        { name: "kuru kayısı", amount: "5", unit: "adet" },
+        // Tatlandırıcı + sıvı
+        { name: "toz şeker", amount: "1.5", unit: "su bardağı" },
+        { name: "sıcak su", amount: "3", unit: "litre" },
+        // Üzeri (kuruyemiş + süs)
+        { name: "ceviz içi", amount: "3", unit: "yemek kaşığı" },
+        { name: "badem", amount: "2", unit: "yemek kaşığı" },
+        { name: "antep fıstığı", amount: "2", unit: "yemek kaşığı" },
+        { name: "tarçın", amount: "1", unit: "yemek kaşığı" },
+        { name: "nar tanesi", amount: "0.5", unit: "su bardağı", optional: true },
+        { name: "susam", amount: "1", unit: "tatlı kaşığı", optional: true },
+      ],
+    },
+  },
+
+  // ── Kazandibi — tereyağı eklendi, karamelize ve soğutma adımları detaylandırıldı
+  // Mevcut tarifte tereyağı eksikti ve karamelize tekniği çok özet ("ocakta yakın")
+  // belirsizdi. Yemek.com tarif yöntemiyle daha açık anlatım.
+  // Kaynak: https://yemek.com/tarif/kazandibi/
+  {
+    title: "Kazandibi",
+    replaceInstructions: [
+      "Tepsiye pudra şekerini yayıp orta ateşte sürekli karıştırarak tüm şeker eriyip altın karamel rengini alana kadar 4-5 dakika yakın.",
+      "Derin bir tencerede süt, şeker, nişasta ve pirinç ununu telçırpıcıyla iyice çırpıp ocağa alın.",
+      "Sürekli karıştırarak orta ateşte kıvam alıp kaynayana kadar 15 dakika pişirin (göz göz olmaya başlayınca koyulaştığını anlayın).",
+      "Vanilya ve tereyağını ekleyip karıştırın, ocaktan alın.",
+      "Karamelize tepsinin üzerine kepçeyle ince bir muhallebi katı yayın, tepsiyi 1 tur daha ateşte gezdirin (kazandibi izi için).",
+      "Kalan muhallebiyi karamelize tabakanın üzerine dökün, oda sıcaklığında 1 saat soğutun.",
+      "Buzdolabında en az 4 saat dinlendirin.",
+      "Soğuduktan sonra ters çevirip kalıbından çıkarın, dilimleyip spatulayla rulo şeklinde sarın ve servis edin.",
+    ],
+    updates: {
+      prepTime: 10,
+      cookTime: 35, // 5 dk karamelize + 15 dk muhallebi + 1 sa soğutma + buzdolabı
+      ingredients: [
+        { name: "süt", amount: "1.2", unit: "litre" },
+        { name: "toz şeker", amount: "1", unit: "su bardağı" },
+        { name: "nişasta", amount: "5", unit: "yemek kaşığı" },
+        { name: "pirinç unu", amount: "2", unit: "yemek kaşığı" },
+        { name: "tereyağı", amount: "1", unit: "yemek kaşığı" },
+        { name: "vanilya", amount: "1", unit: "paket" },
+        { name: "pudra şekeri (karamelize için)", amount: "4", unit: "yemek kaşığı" },
+      ],
+    },
+  },
+
+  // ── Künefe — peynir türü netleştirildi, pişirme tekniği detaylandırıldı
+  // Mevcut "tuzsuz peynir" çok genelti ve "iki yüzünü kızartın" tekniği belirsizdi.
+  // Geleneksel olarak Antakya peyniri / dil peyniri kullanılır.
+  // Kaynak: https://yemek.com/tarif/kunefe/
+  {
+    title: "Künefe",
+    replaceInstructions: [
+      "Şerbet için şeker ve suyu kısık ateşte kaynatın, limon suyunu ekleyip 20 dakika daha pişirin (kaşıktan ip gibi süzülmeli). Soğumaya bırakın.",
+      "Tel kadayıfı bıçakla küçük doğrayın, eritilmiş tereyağıyla iyice ovuşturarak harmanlayın.",
+      "Sahanın yarısına kadayıfın yarısını yayıp avuç içiyle bastırın.",
+      "Üstüne ince dilimlenmiş peyniri eşit yayın, kalan kadayıfla kapatıp tekrar bastırın.",
+      "Kısık ateşte alt taraf altın renge gelene kadar 5-7 dakika pişirin.",
+      "Geniş bir tabak yardımıyla sahanı ters çevirin, künefeyi sahana geri kaydırıp diğer tarafını 5-7 dakika daha kızartın.",
+      "Çıkar çıkmaz soğuk şerbeti üzerine dökün, dövülmüş antep fıstığı serpip sıcak servis edin.",
+    ],
+    updates: {
+      ingredients: [
+        { name: "tel kadayıf", amount: "300", unit: "gram" },
+        { name: "tuzsuz Antakya peyniri (veya dil peyniri)", amount: "250", unit: "gram" },
+        { name: "tereyağı", amount: "150", unit: "gram" },
+        { name: "toz şeker", amount: "2", unit: "su bardağı" },
+        { name: "su", amount: "2", unit: "su bardağı" },
+        { name: "limon suyu", amount: "1", unit: "yemek kaşığı" },
+        { name: "antep fıstığı (dövülmüş)", amount: "3", unit: "yemek kaşığı" },
+      ],
+    },
+  },
+
+  // ── Tarhana Çorbası — sarımsak eksikti, yumuşatma tekniği yanlıştı
+  // Mevcut: "1 saat suda bekletin" → klasik tekniği oda sıcaklığında suyla
+  // çırpılarak yumuşatma. Sarımsak klasik tarhana çorbasının olmazsa olmazı.
+  // Nane çorbanın içinde, üst süs değil.
+  // Kaynak: https://yemek.com/tarif/tarhana-corbasi/
+  {
+    title: "Tarhana Çorbası",
+    replaceInstructions: [
+      "Tarhana, nane ve 2 su bardağı oda sıcaklığında suyu derin bir kâsede telçırpıcıyla çırparak yumuşatın, 15 dakika dinlendirin.",
+      "Tencerede tereyağı ve sıvı yağı eritin, ezilmiş sarımsağı 30 saniye kavurun.",
+      "Salçayı ekleyip 1 dakika daha kavurun (yakmayın).",
+      "Yumuşamış tarhana karışımını ekleyip karıştırın, kalan 5 su bardağı sıcak suyu yavaşça katın.",
+      "Sürekli karıştırarak kaynayana kadar pişirin, tuzu ekleyip 15 dakika daha pişirin.",
+      "Servis sırasında üzerine pul biberli kızdırılmış tereyağı gezdirin.",
+    ],
+    updates: {
+      prepTime: 15,
+      cookTime: 20,
+      ingredients: [
+        { name: "tarhana", amount: "4", unit: "yemek kaşığı" },
+        { name: "kuru nane", amount: "1", unit: "yemek kaşığı" },
+        { name: "sarımsak", amount: "1", unit: "diş" },
+        { name: "domates salçası", amount: "1", unit: "yemek kaşığı" },
+        { name: "tereyağı", amount: "1", unit: "yemek kaşığı" },
+        { name: "sıvı yağ", amount: "1", unit: "yemek kaşığı" },
+        { name: "su", amount: "7", unit: "su bardağı" },
+        { name: "tuz", amount: "1", unit: "tatlı kaşığı" },
+        { name: "pul biber (üzeri için)", amount: "1", unit: "tatlı kaşığı" },
+      ],
+    },
+  },
+
+  // ── Ezogelin Çorbası — kimyon opsiyonel + servis limonu, kavurma tekniği detaylı
+  // Mevcut tarif: salça ve nane çorbaya birlikte atılıyor. Yemek.com daha
+  // doğru: soğan + salça + nane ayrı tavada kavrulup çorbaya katılır.
+  // Klasik servis için yarım limon eksikti.
+  // Kaynak: https://yemek.com/tarif/ezogelin-corbasi/
+  {
+    title: "Ezogelin Çorbası",
+    replaceInstructions: [
+      "Sıcak suyu tencerede kaynatın, yıkanmış mercimek, pirinç, bulgur ve tuzu ekleyin.",
+      "Kısık ateşte mercimekler dağılana kadar 30 dakika pişirin.",
+      "Ayrı bir tavada tereyağını eritin, küp doğranmış soğanı pembeleştirin.",
+      "Salçayı ekleyip 1 dakika kavurun, sonra kuru naneyi katıp 30 saniye daha kavurun.",
+      "Kavurmayı çorbaya ekleyip 5 dakika daha pişirin.",
+      "Pul biber ve isteğe bağlı kimyon serpip karıştırın.",
+      "Servis tabaklarına alıp üzerine taze limon suyu sıkın.",
+    ],
+    updates: {
+      prepTime: 10,
+      cookTime: 40,
+      ingredients: [
+        { name: "kırmızı mercimek", amount: "0.5", unit: "su bardağı" },
+        { name: "bulgur", amount: "2", unit: "yemek kaşığı" },
+        { name: "pirinç", amount: "2", unit: "yemek kaşığı" },
+        { name: "soğan", amount: "1", unit: "adet" },
+        { name: "domates salçası", amount: "1", unit: "yemek kaşığı" },
+        { name: "tereyağı", amount: "2", unit: "yemek kaşığı" },
+        { name: "kuru nane", amount: "1", unit: "tatlı kaşığı" },
+        { name: "pul biber", amount: "1", unit: "tatlı kaşığı" },
+        { name: "kimyon", amount: "0.5", unit: "tatlı kaşığı", optional: true },
+        { name: "limon (servis için)", amount: "0.5", unit: "adet" },
+        { name: "tuz", amount: "1", unit: "tatlı kaşığı" },
+        { name: "sıcak su", amount: "7", unit: "su bardağı" },
+      ],
+    },
+  },
+
+  // ── Mantar Çorbası — limon (mantar kararma engeller) + dereotu üst süsü
+  // Mevcut tarif iyi ama yemek.com'a göre 2 küçük ekleme: mantarlar haşlama
+  // suyunda limon (kararmasın), servis sırasında dereotu.
+  // Kaynak: https://yemek.com/tarif/mantar-corbasi/
+  {
+    title: "Mantar Çorbası",
+    replaceInstructions: [
+      "Mantarları temizleyip dilimleyin, soğanı ince doğrayın.",
+      "Tereyağında soğanı pembeleştirin, mantarları ve birkaç damla limon suyunu ekleyin (kararmasın).",
+      "Mantarlar suyunu çekene kadar 5 dakika kavurun, unu ilave edip 1 dakika daha kavurun.",
+      "Suyu ve sütü yavaşça karıştırarak ekleyin, sürekli karıştırın.",
+      "Tuz ve karabiberle tatlandırıp kısık ateşte 10 dakika kaynatın.",
+      "Servis sırasında üzerine kıyılmış taze dereotu serpin.",
+    ],
+    updates: {
+      ingredients: [
+        { name: "mantar", amount: "300", unit: "gram" },
+        { name: "soğan", amount: "1", unit: "adet" },
+        { name: "un", amount: "2", unit: "yemek kaşığı" },
+        { name: "süt", amount: "2", unit: "su bardağı" },
+        { name: "tereyağı", amount: "3", unit: "yemek kaşığı" },
+        { name: "limon suyu", amount: "1", unit: "tatlı kaşığı" },
+        { name: "tuz", amount: "1", unit: "tatlı kaşığı" },
+        { name: "karabiber", amount: "1", unit: "tutam" },
+        { name: "su", amount: "3", unit: "su bardağı" },
+        { name: "taze dereotu (üzeri için)", amount: "1", unit: "yemek kaşığı" },
+      ],
+    },
+  },
+
+  // ── Düğün Çorbası — toz kırmızı biber + nane üst süsü (klasik tat)
+  // Mevcut tarif "üstüne pul biberli tereyağı" diyor — eksik: nane ve toz
+  // kırmızı biber. Düğün çorbasında bu üçü beraber yakılır.
+  // Kaynak: https://yemek.com/tarif/dugun-corbasi/
+  {
+    title: "Düğün Çorbası",
+    replaceInstructions: [
+      "Kuzu kuşbaşını yıkayıp tencereye alın, suyu ekleyip kaynatın, köpüğünü temizleyin.",
+      "Kısık ateşte 1 saat haşlayın, eti süzüp suyunu saklayın.",
+      "Yoğurt, un, yumurta sarısı ve limon suyunu derin kâsede telçırpıcıyla iyice çırpın.",
+      "Yoğurt karışımına azar azar 2 su bardağı sıcak et suyu ekleyerek tavlandırın (yoğurt kesilmesin).",
+      "Tavlandırılmış karışımı kalan et suyuna sürekli karıştırarak dökün, eti tencereye geri koyun.",
+      "Tuzu ekleyip sürekli karıştırarak 10 dakika kısık ateşte kaynatın.",
+      "Ayrı bir tavada tereyağını eritin, toz kırmızı biber, kuru nane ve pul biberi katıp 30 saniye yakın.",
+      "Servis sırasında bu yağı çorbanın üzerine gezdirin.",
+    ],
+    updates: {
+      ingredients: [
+        { name: "kuzu kuşbaşı", amount: "200", unit: "gram" },
+        { name: "yoğurt", amount: "1", unit: "su bardağı" },
+        { name: "yumurta sarısı", amount: "1", unit: "adet" },
+        { name: "un", amount: "1", unit: "yemek kaşığı" },
+        { name: "limon", amount: "0.5", unit: "adet" },
+        { name: "tuz", amount: "1", unit: "tatlı kaşığı" },
+        { name: "su", amount: "6", unit: "su bardağı" },
+        // Üzeri için
+        { name: "tereyağı (üzeri için)", amount: "2", unit: "yemek kaşığı" },
+        { name: "toz kırmızı biber", amount: "0.5", unit: "çay kaşığı" },
+        { name: "kuru nane", amount: "1", unit: "tutam" },
+        { name: "pul biber", amount: "1", unit: "tatlı kaşığı" },
+      ],
+    },
+  },
+
+  // ── Menemen — zeytinyağı + tereyağı karışımı, pul biber, maydanoz eklendi
+  // Mevcut: sadece tereyağı, pul biber yok, maydanoz yok.
+  // Klasik menemende yağ karışımı + pul biber + üzeri maydanoz olmazsa olmaz.
+  // Kaynak: https://yemek.com/tarif/menemen/
+  {
+    title: "Menemen",
+    replaceInstructions: [
+      "Sivri biberleri ince halkalar halinde doğrayın.",
+      "Tavada zeytinyağı ve tereyağını eritin, biberleri orta ateşte 3-4 dakika kavurun.",
+      "Domatesleri rendeleyip ekleyin, suyunu çekmeye yakın hale gelene kadar 5-6 dakika pişirin.",
+      "Tuz, karabiber ve pul biber serpip karıştırın.",
+      "Yumurtaları üzerine kırıp tuzla hafifçe çırpın, orta ateşte sürekli karıştırarak 3-4 dakika pişirin.",
+      "Ocaktan alıp üzerine ince kıyılmış maydanoz serpip sıcak servis edin.",
+    ],
+    updates: {
+      ingredients: [
+        { name: "yumurta", amount: "3", unit: "adet" },
+        { name: "domates", amount: "3", unit: "adet" },
+        { name: "sivri biber", amount: "3", unit: "adet" },
+        { name: "zeytinyağı", amount: "1", unit: "yemek kaşığı" },
+        { name: "tereyağı", amount: "1", unit: "yemek kaşığı" },
+        { name: "tuz", amount: "1", unit: "çay kaşığı" },
+        { name: "karabiber", amount: "1", unit: "tutam" },
+        { name: "pul biber", amount: "0.5", unit: "tatlı kaşığı" },
+        { name: "maydanoz (üzeri için)", amount: "2", unit: "yemek kaşığı" },
+      ],
+    },
+  },
+
+  // ── Çılbır — nane ve karabiber üst yağı klasiği, su miktarı netleştirildi
+  // Mevcut tarifte üst tereyağına SADECE pul biber atılıyor. Klasik çılbır
+  // tereyağına pul biber + nane + karabiber üçlüsü yakılır.
+  // Kaynak: https://yemek.com/tarif/cilbir/
+  {
+    title: "Çılbır",
+    replaceInstructions: [
+      "Süzme yoğurda ezilmiş sarımsağı ve tuzu katıp karıştırın, servis tabağının altına eşit yayın.",
+      "1 litre suyu kaynatın, fokurdayıp dururken sirkeyi ekleyip ısıyı kısın.",
+      "Yumurtaları teker teker kepçe veya bardakla suya nazikçe bırakıp 3-4 dakika poşe edin (sarısı rafadan kalmalı).",
+      "Poşe yumurtaları kevgirle alıp yoğurdun üstüne yerleştirin.",
+      "Ayrı bir tavada tereyağını eritin, pul biber, kuru nane ve karabiberi ekleyip 30 saniye yakın.",
+      "Baharatlı tereyağını çılbırın üstüne gezdirip sıcak servis edin.",
+    ],
+    updates: {
+      ingredients: [
+        { name: "yumurta", amount: "2", unit: "adet" },
+        { name: "süzme yoğurt", amount: "1", unit: "su bardağı" },
+        { name: "sarımsak", amount: "1", unit: "diş" },
+        { name: "tereyağı", amount: "2", unit: "yemek kaşığı" },
+        { name: "elma sirkesi", amount: "2", unit: "yemek kaşığı" },
+        { name: "su (poşe için)", amount: "1", unit: "litre" },
+        { name: "pul biber", amount: "1", unit: "tatlı kaşığı" },
+        { name: "kuru nane", amount: "1", unit: "tatlı kaşığı" },
+        { name: "karabiber", amount: "1", unit: "çay kaşığı" },
+        { name: "tuz", amount: "1", unit: "tutam" },
+      ],
+    },
+  },
+
+  // ── Mıhlama — süt + su eklendi (sıvısız mıhlama olmaz)
+  // Mevcut tarif: tereyağı + un + peynir — sıvı yok. Yemek.com'da klasik
+  // teknik: tereyağında un kavurma + süt/su ekleme + peynir katma.
+  // Sıvısız versiyon erimiş peynir-yağ olur, hamur olmaz.
+  // Kaynak: https://yemek.com/tarif/muhlama/
+  {
+    title: "Mıhlama",
+    replaceInstructions: [
+      "Sahanda tereyağını orta ateşte eritin.",
+      "Mısır ununu ekleyip 2 dakika sürekli karıştırarak kavurun (yakmadan).",
+      "Sütü ve suyu yavaşça ekleyip topak olmaması için telçırpıcıyla karıştırın.",
+      "Karışım kıvam almaya başlayınca ısıyı kısın, rendelenmiş tel peyniri (kolot/Trabzon) ekleyin.",
+      "Peynir tellenip eriyene kadar fazla karıştırmadan minik dokunuşlarla pişirin.",
+      "Sıcak sıcak, ekmek ile servis edin.",
+    ],
+    updates: {
+      prepTime: 5,
+      cookTime: 15,
+      ingredients: [
+        { name: "tereyağı", amount: "4", unit: "yemek kaşığı" },
+        { name: "mısır unu", amount: "3", unit: "yemek kaşığı" },
+        { name: "süt", amount: "1", unit: "su bardağı" },
+        { name: "su", amount: "1.5", unit: "su bardağı" },
+        { name: "kolot peyniri (veya Trabzon tel peyniri)", amount: "200", unit: "gram" },
+        { name: "tuz", amount: "1", unit: "tutam" },
+      ],
+    },
+  },
+
+  // ── Patatesli Yumurta — maydanoz eklendi (üst süs)
+  // Yemek.com'da maydanoz var, bizde yoktu. Küçük ama klasik bir detay.
+  // Kaynak: https://yemek.com/tarif/patatesli-yumurta/
+  {
+    title: "Patatesli Yumurta",
+    replaceInstructions: [
+      "Patatesleri küçük küpler halinde doğrayın.",
+      "Tavada zeytinyağını kızdırın, patatesleri ekleyip kapağını kapatın.",
+      "Orta-kısık ateşte ara sıra karıştırarak 15-20 dakika yumuşayana kadar pişirin.",
+      "Tuz, karabiber ve pul biberi serpip karıştırın.",
+      "Yumurtaları üzerine kırın, kapağı kapatıp sarısı rafadan kalacak şekilde 1-2 dakika pişirin.",
+      "Üzerine ince kıyılmış taze maydanoz serpip sıcak servis edin.",
+    ],
+    updates: {
+      ingredients: [
+        { name: "patates", amount: "3", unit: "adet" },
+        { name: "yumurta", amount: "3", unit: "adet" },
+        { name: "zeytinyağı", amount: "3", unit: "yemek kaşığı" },
+        { name: "tuz", amount: "1", unit: "çay kaşığı" },
+        { name: "karabiber", amount: "1", unit: "tutam" },
+        { name: "pul biber", amount: "1", unit: "tutam" },
+        { name: "maydanoz (üzeri için)", amount: "2", unit: "yemek kaşığı" },
+      ],
+    },
+  },
+
+  // ── Piyaz — limon ve karabiber eklendi (klasik piyaz sosunun yarısı)
+  // Mevcut tarifte sirke var ama limon yok. Yemek.com'a göre klasik piyaz
+  // sosu limon + sirke ikilisinden oluşur. Karabiber de eksikti.
+  // Mor soğan spesifik olarak belirtildi (klasik piyaz mor soğanla yapılır).
+  // Kaynak: https://yemek.com/tarif/piyaz/
+  {
+    title: "Piyaz",
+    replaceInstructions: [
+      "Mor soğanları piyazlık ince doğrayın, sumak ve tuzla ovup acısını alın.",
+      "Maydanozu ince kıyın, domatesi küp doğrayın, yumurtaları haşlayıp dilimleyin.",
+      "Haşlanmış fasulyeyi soğan, maydanoz ve domatesle bir kâseye alıp karıştırın.",
+      "Zeytinyağı, limon suyu, sirke, karabiber ve kalan sumakla soslayın.",
+      "Üzerini yumurta dilimleriyle süsleyip soğuk servis edin.",
+    ],
+    updates: {
+      ingredients: [
+        { name: "haşlanmış kuru fasulye", amount: "2", unit: "su bardağı" },
+        { name: "mor soğan", amount: "1", unit: "adet" },
+        { name: "maydanoz", amount: "0.5", unit: "demet" },
+        { name: "yumurta", amount: "2", unit: "adet" },
+        { name: "domates", amount: "1", unit: "adet" },
+        { name: "zeytinyağı", amount: "3", unit: "yemek kaşığı" },
+        { name: "sirke", amount: "1", unit: "yemek kaşığı" },
+        { name: "limon", amount: "0.25", unit: "adet" },
+        { name: "sumak", amount: "2", unit: "tatlı kaşığı" },
+        { name: "karabiber", amount: "1", unit: "çay kaşığı" },
+        { name: "tuz", amount: "1", unit: "çay kaşığı" },
+      ],
+    },
+  },
+
+  // ── Acılı Ezme — nane, limon, taze soğan eklendi (klasik Gaziantep usulü)
+  // Mevcut tarif: kuru soğan, nane yok, limon yok. Klasik acılı ezme:
+  // taze soğan + nane + limon + nar ekşisi şeklinde. Robot uyarısı eklendi.
+  // Kaynak: https://yemek.com/tarif/acili-ezme/
+  {
+    title: "Acılı Ezme",
+    replaceInstructions: [
+      "Tüm sebzeleri (domates, biber, taze soğan, sarımsak) bıçakla çok ince kıyın.",
+      "Mutfak robotuna geçirmeyin — su salar ve ezmesi olmaz.",
+      "Maydanozu ince kıyın, kıyılmış sebzelerle karıştırın.",
+      "Biber salçası, kırmızı toz biber, kuru nane, tuz ve pul biberi ekleyin.",
+      "Zeytinyağı, taze sıkılmış limon suyu ve nar ekşisini gezdirin.",
+      "İyice karıştırıp 30 dakika dinlendirerek lezzetlerin oturmasını sağlayın.",
+    ],
+    updates: {
+      prepTime: 30,
+      ingredients: [
+        { name: "domates", amount: "3", unit: "adet" },
+        { name: "kırmızı biber", amount: "2", unit: "adet" },
+        { name: "yeşil sivri biber", amount: "2", unit: "adet" },
+        { name: "taze soğan", amount: "6", unit: "dal" },
+        { name: "sarımsak", amount: "3", unit: "diş" },
+        { name: "maydanoz", amount: "0.5", unit: "demet" },
+        { name: "biber salçası", amount: "1", unit: "yemek kaşığı" },
+        { name: "kuru nane", amount: "1", unit: "tatlı kaşığı" },
+        { name: "toz kırmızı biber", amount: "2", unit: "çay kaşığı" },
+        { name: "pul biber", amount: "1", unit: "tatlı kaşığı" },
+        { name: "nar ekşisi", amount: "2", unit: "yemek kaşığı" },
+        { name: "zeytinyağı", amount: "3", unit: "yemek kaşığı" },
+        { name: "limon", amount: "1", unit: "adet" },
+        { name: "tuz", amount: "1", unit: "çay kaşığı" },
+      ],
+    },
+  },
+
+  // ── Çiğ Köfte (Etsiz) — klasik Urfa usulü baharatlar eklendi
+  // Mevcut: 13 malzeme. Karabiber, pul biber, sumak, sarımsak, toz kırmızı
+  // biber, domates rendesi yoktu. Klasik Urfa usulü çiğ köfte bu baharatlarla
+  // yoğrulur. Bulguru sıcak suyla bekletme + isot/pul biberi sıvı yağda
+  // çözme + soğan-domates rendelerinin suyunu sıkma teknikleri eklendi.
+  // Kaynak: yemek.com araması (yemek.com/tarif/etsiz-cig-kofte/)
+  {
+    title: "Çiğ Köfte (Etsiz)",
+    replaceInstructions: [
+      "Ince bulguru derin bir kâseye alın, üzerine sıcak suyu döküp kapağını kapatın ve 15 dakika dinlendirin (bulgur kabarsın).",
+      "Küçük bir kâsede isot ve pul biberi 2 yemek kaşığı sıvı yağla karıştırarak çözün — bu aromayı serbest bırakır.",
+      "Soğanı ve domatesi ayrı ayrı rendeleyip avucunuzda sıkarak fazla sularını süzün.",
+      "Sarımsağı ezin, maydanozu ince kıyın.",
+      "Kabarmış bulgura salça, biber salçası, çözünmüş baharat karışımı, sarımsak, soğan rendesi ve domates rendesini ekleyin.",
+      "Karabiber, kimyon, toz kırmızı biber, sumak ve tuzu serpip 15-20 dakika el ile yoğurun (kıvam alana kadar).",
+      "Kalan zeytinyağı, nar ekşisi ve maydanozu katıp son kez harmanlayın.",
+      "Elinizle uzunca köfte şekilleri verin, marul yapraklarının üstünde limon ile servis edin.",
+    ],
+    updates: {
+      prepTime: 60,
+      cookTime: 1,
+      ingredients: [
+        { name: "köftelik ince bulgur", amount: "2", unit: "su bardağı" },
+        { name: "sıcak su", amount: "1.5", unit: "su bardağı" },
+        { name: "soğan", amount: "1", unit: "adet" },
+        { name: "domates", amount: "1", unit: "adet" },
+        { name: "sarımsak", amount: "3", unit: "diş" },
+        { name: "domates salçası", amount: "2", unit: "yemek kaşığı" },
+        { name: "biber salçası", amount: "1", unit: "yemek kaşığı" },
+        { name: "isot biberi", amount: "1", unit: "yemek kaşığı" },
+        { name: "pul biber", amount: "1", unit: "tatlı kaşığı" },
+        { name: "toz kırmızı biber", amount: "1", unit: "tatlı kaşığı" },
+        { name: "karabiber", amount: "1", unit: "çay kaşığı" },
+        { name: "kimyon", amount: "1", unit: "tatlı kaşığı" },
+        { name: "sumak", amount: "1", unit: "yemek kaşığı" },
+        { name: "nar ekşisi", amount: "2", unit: "yemek kaşığı" },
+        { name: "zeytinyağı", amount: "3", unit: "yemek kaşığı" },
+        { name: "maydanoz", amount: "0.5", unit: "demet" },
+        { name: "tuz", amount: "1", unit: "tatlı kaşığı" },
+        { name: "marul yaprağı (servis için)", amount: "5", unit: "adet" },
+        { name: "limon", amount: "1", unit: "adet" },
+      ],
+    },
+  },
+
+  // ── #2 İskender — yemek.com'a göre içerik zenginleştirildi
+  // Mevcut tarif sadece 5 malzemeydi (et, pide, yoğurt, domates sosu, tereyağı)
+  // — domates sosu ve et marinasyonu için detay eksikti.
+  // Kaynak: https://yemek.com/tarif/iskender/
+  {
+    title: "İskender",
+    replaceInstructions: [
+      "Antrikotu ince dilimleyip süt, ezilmiş sarımsak, salça, kekik, kırmızı biber ve tuzla harmanlayıp 1 saat marine edin.",
+      "Tırnak pideyi küp doğrayıp kuru tavada 1-2 dakika ısıtın, derin tabağa dizin.",
+      "Tereyağını eritip eti 6-8 dakika yüksek ateşte mühürleyin ve pidelerin üstüne koyun.",
+      "Domates sosu için: tereyağında salça ve kırmızı biberi kavurun, sıcak su ve tuz ekleyip 3 dakika kaynatın.",
+      "Yoğurdu pidelerin yanına yerleştirin, domates sosunu etin üstüne gezdirin.",
+      "Kalan tereyağını cızırdayana kadar ısıtıp tabağın üstüne dökerek sıcak servis edin.",
+    ],
+    updates: {
+      prepTime: 65, // 60 dk marinasyon + 5 dk hazırlık
+      cookTime: 15,
+      servings: 2,
+      ingredients: [
+        // Et için
+        { name: "antrikot (ince dilimlenmiş döner)", amount: "400", unit: "gram" },
+        { name: "süt", amount: "0.5", unit: "su bardağı" },
+        { name: "sarımsak", amount: "2", unit: "diş" },
+        { name: "salça", amount: "1", unit: "tatlı kaşığı" },
+        { name: "kekik", amount: "1", unit: "tatlı kaşığı" },
+        { name: "kırmızı toz biber", amount: "1", unit: "tatlı kaşığı" },
+        // Sos için
+        { name: "domates salçası", amount: "1", unit: "yemek kaşığı" },
+        { name: "kırmızı toz biber", amount: "1", unit: "tatlı kaşığı" },
+        { name: "sıcak su", amount: "1", unit: "su bardağı" },
+        // Servis için
+        { name: "tırnak pide", amount: "2", unit: "adet" },
+        { name: "süzme yoğurt", amount: "1", unit: "su bardağı" },
+        { name: "tereyağı", amount: "80", unit: "gram" },
+        { name: "tuz", amount: "1", unit: "tatlı kaşığı" },
+        { name: "karabiber", amount: "1", unit: "çay kaşığı" },
+      ],
+    },
+  },
+];
+
+(async () => {
+  if (!process.env.MONGO_URI) {
+    console.error("MONGO_URI tanımlı değil");
+    process.exit(1);
+  }
+
+  await mongoose.connect(process.env.MONGO_URI);
+  console.log(`MongoDB bağlandı ${DRY_RUN ? "(DRY-RUN modu)" : ""}\n`);
+
+  let updated = 0;
+  let notFound = 0;
+
+  for (const fix of FIXES) {
+    const recipe = await Recipe.findOne({ title: fix.title });
+    if (!recipe) {
+      console.log(`⚠️  "${fix.title}" bulunamadı, atlandı`);
+      notFound++;
+      continue;
+    }
+
+    const patch = {};
+    if (fix.replaceInstructions) patch.instructions = fix.replaceInstructions;
+    if (fix.updates) Object.assign(patch, fix.updates);
+
+    console.log(`📝 ${fix.title}`);
+    Object.entries(patch).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        console.log(`    ${key}: ${value.length} adım`);
+      } else {
+        console.log(`    ${key}: ${value}`);
+      }
+    });
+
+    if (!DRY_RUN) {
+      await Recipe.updateOne({ _id: recipe._id }, { $set: patch });
+    }
+    updated++;
+    console.log();
+  }
+
+  console.log(
+    `Toplam: ${updated} tarif ${DRY_RUN ? "güncellenecek" : "güncellendi"}, ${notFound} bulunamadı`
+  );
+
+  await mongoose.disconnect();
+  process.exit(0);
+})().catch((err) => {
+  console.error("Hata:", err);
+  process.exit(1);
+});
