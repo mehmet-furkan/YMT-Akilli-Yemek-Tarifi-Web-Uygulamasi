@@ -9,30 +9,59 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat&logo=tailwindcss&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 
-Kullanıcıların ellerindeki malzemelere göre tarif önerileri sunan ve kişiselleştirilmiş yemek planları oluşturabilen bir MERN stack web uygulaması.
+Kullanıcıların ellerindeki malzemelere göre eşleşme yüzdesiyle tarif öneren, puanlama/yorum, favori ve profil özellikleri sunan bir **MERN** stack web uygulaması.
+
+> **Bir cümlede:** "Buzdolabında ne varsa onu yaz; biz sana ne pişirebileceğini, eksik malzemeleriyle birlikte söyleyelim."
+
+---
+
+## ✨ Özellikler
+
+- 🥘 **Akıllı malzeme-bazlı öneri** — elindeki malzemelere göre tarifleri 0–100 eşleşme skoruyla sıralar, eksik malzemeleri gösterir
+- 🔎 **Akıllı arama** — eş-anlamlı malzeme sözlüğü (ör. "et" → kıyma, kuşbaşı, sucuk…) ve Türkçe karakter duyarlı eşleşme
+- 🥗 **Diyet filtreleme** — Vegan / Vejetaryen / Glutensiz / Laktozsuz tercihlerine göre eleme
+- ⭐ **Puanlama & yorum** — 1–5 yıldız, tarif başına ortalama puan (denormalize cache)
+- 🔖 **Favoriler** ve **profil sistemi** (tariflerim, taslaklarım, kaydedilenler, yorumlarım)
+- 🔐 **Kimlik doğrulama** — JWT (e-posta/şifre) + **Google ile Giriş** (hesap birleştirme)
+- 🍽️ **Tarif detayları** — porsiyon ölçekleme, sosyal paylaşım, rastgele tarif
+- 📚 **Swagger UI** ile canlı API dokümantasyonu (`/api-docs`)
+- 🛡️ **Güvenlik** — Helmet, HPP, rate limiting, zod doğrulama, bcrypt
+- 📈 **Gözlemlenebilirlik** — winston loglama + Sentry hata izleme
 
 ---
 
 ## 📁 Proje Yapısı
 
 ```
-├── backend/          # Node.js + Express API
-│   ├── config/       # DB & Swagger ayarları
-│   ├── controllers/  # İş mantığı
-│   ├── middleware/    # Auth & hata yönetimi
-│   ├── models/       # Mongoose şemaları
-│   ├── routes/       # API rotaları
-│   └── server.js     # Ana giriş noktası
+├── backend/                  # Node.js + Express 5 API (JavaScript / CommonJS)
+│   ├── config/               # db.js (MongoDB), swagger.js
+│   ├── controllers/          # HTTP handler'lar (auth, users, recipes, comments, favorites, recommendations)
+│   ├── lib/                  # asyncHandler, rateLimiters, sentry, validation/ (zod şemaları)
+│   ├── middleware/           # authMiddleware (protect), errorMiddleware
+│   ├── models/               # Mongoose şemaları (User, Recipe, Comment, Favorite, Ingredient)
+│   ├── routes/               # API rotaları
+│   ├── scripts/              # seed, seedRecipes, downloadImages, enrichNutrition, ...
+│   ├── services/             # recommendation.service, rating.service (iş mantığı)
+│   ├── tests/                # Jest birim testleri
+│   ├── utils/                # logger (winston)
+│   └── server.js             # Ana giriş noktası
 │
-├── client/           # React + Vite + TypeScript
+├── client/                   # React 18 + Vite + TypeScript
 │   ├── src/
-│   │   ├── components/   # Paylaşılabilir UI bileşenleri
-│   │   ├── contexts/     # React Context Provider'ları
-│   │   ├── lib/          # Axios, React Query ayarları
-│   │   └── pages/        # Sayfa bileşenleri
+│   │   ├── components/        # ui/ + feature/ + profile/ + ProtectedRoute
+│   │   ├── contexts/          # AuthContext
+│   │   ├── hooks/             # useAuth, useFavorites, useRecommendations, useRecipeComments
+│   │   ├── lib/               # axios (interceptor'lı), queryClient
+│   │   ├── pages/             # Login, Register, Home, RecipeDetail, Recommendation, Profile, ...
+│   │   ├── types/             # API response tipleri
+│   │   ├── utils/             # formatDuration, scaleAmount
+│   │   └── main.tsx
 │   └── vite.config.ts
 │
+├── docs/                     # openapi.yaml (API sözleşmesi), ui-spec, user-stories, deploy, handoff
+├── .github/workflows/ci.yml  # CI: backend test + frontend build
 ├── docker-compose.yml
+├── CLAUDE.md                 # AI agent kuralları / proje standartları
 └── README.md
 ```
 
@@ -44,7 +73,7 @@ Kullanıcıların ellerindeki malzemelere göre tarif önerileri sunan ve kişis
 
 - **Node.js** ≥ 18
 - **npm** ≥ 9
-- **MongoDB** (yerel veya Atlas) – ya da Docker
+- **MongoDB** (yerel, Atlas veya Docker)
 
 ---
 
@@ -52,38 +81,41 @@ Kullanıcıların ellerindeki malzemelere göre tarif önerileri sunan ve kişis
 
 ```bash
 cd backend
-cp .env.example .env   # Env dosyasını düzenleyin
+cp .env.example .env    # Env dosyasını düzenleyin
 npm install
 npm run dev             # http://localhost:5001
 ```
 
-> **`.env` değişkenleri:**
-> ```env
-> NODE_ENV=development
-> PORT=5001
-> MONGO_URI=mongodb://localhost:27017/nightcodekitchen
-> JWT_SECRET=<64-karakter-rastgele-string>
-> JWT_EXPIRE=7d
-> CLIENT_URL=http://localhost:3000
-> ```
->
 > ⚠️ `JWT_SECRET` için güçlü bir değer üretin:
 > ```bash
 > node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 > ```
 
-#### Görselleri İndirme (Local Setup)
+#### Backend `.env` değişkenleri
 
-Tarif görselleri Pixabay'den çekiliyor ve direkt URL'ler ~24 saat sonra geçersiz
-oluyor. Görselleri kalıcı olarak kendi sunucunuza indirmek için (tarifler
-seed'lendikten sonra) backend klasöründe şu komutu çalıştırın:
+| Değişken | Zorunlu | Açıklama |
+| --- | --- | --- |
+| `NODE_ENV` | ✅ | `development` / `production` |
+| `PORT` | ✅ | API portu (varsayılan 5001) |
+| `MONGO_URI` | ✅ | MongoDB bağlantı dizesi (yerel / Atlas / Docker'da `mongodb://mongo:27017/...`) |
+| `JWT_SECRET` | ✅ | En az 64 karakter rastgele hex |
+| `JWT_EXPIRE` | ✅ | Token süresi (ör. `7d`) |
+| `CLIENT_URL` | ✅ | CORS için frontend origin (ör. `http://localhost:3000`) |
+| `LOG_LEVEL` | — | winston log seviyesi (`debug`/`info`/`warn`/`error`) |
+| `SENTRY_DSN` | — | Hata izleme; yalnızca `production`'da aktif. Boşsa atlanır |
+| `SENTRY_TRACES_SAMPLE_RATE` | — | Trace örnekleme oranı (0–1, varsayılan 0.1) |
+| `PIXABAY_API_KEY` | — | `images:backfill`/`images:download` için tarif görselleri |
+| `GOOGLE_CLIENT_ID` | — | `POST /api/auth/google` için zorunlu (Google girişini kullanacaksanız) |
+
+#### Veri ekme (seed) ve görseller
 
 ```bash
-npm run images:download
+npm run seed:recipes     # 100 Türkçe tarifi veritabanına ekler (idempotent)
+npm run seed:nutrition   # Tariflere tahmini besin değerlerini doldurur
+npm run images:download  # Görselleri backend/public/images/ altına indirir (/images yolundan servis edilir)
 ```
 
-Görseller `backend/public/images/` altına iner (git'e girmez) ve `/images/...`
-yolundan servis edilir.
+> Tarif görselleri Pixabay'den çekilir; direkt URL'ler ~24 saatte geçersiz olduğu için kalıcı olarak self-host edilir (`backend/public/images/`, git'e girmez).
 
 ---
 
@@ -91,64 +123,69 @@ yolundan servis edilir.
 
 ```bash
 cd client
-cp .env.example .env   # Gerekirse VITE_API_URL'i düzenleyin
+cp .env.example .env    # Gerekirse VITE_API_URL'i düzenleyin
 npm install
 npm run dev             # http://localhost:3000
 ```
 
-> **`.env` değişkenleri:**
-> ```env
-> VITE_API_URL=http://localhost:5001/api
-> ```
->
-> ⚠️ Geliştirme modunda `vite.config.ts`'deki proxy `/api` isteklerini otomatik olarak `http://localhost:5001`'e yönlendirir, bu yüzden `.env` dosyasını boş bırakmanız da yeterlidir.
+#### Client `.env` değişkenleri
+
+| Değişken | Zorunlu | Açıklama |
+| --- | --- | --- |
+| `VITE_API_URL` | — | Backend API tam URL'i. Yerelde boş bırakılabilir; Vite proxy `/api`'yi `:5001`'e yönlendirir |
+| `VITE_GOOGLE_CLIENT_ID` | — | "Google ile Giriş" butonu için (backend `GOOGLE_CLIENT_ID` ile aynı değer) |
+
+> Geliştirme modunda `vite.config.ts`'deki proxy `/api` isteklerini otomatik olarak `http://localhost:5001`'e yönlendirir.
 
 ---
 
 ## 🐳 Docker ile Çalıştırma
 
-Tüm servisleri tek komutla ayağa kaldırın:
-
 ```bash
 docker-compose up --build
 ```
 
-| Servis   | Port  | Açıklama                |
-| -------- | ----- | ----------------------- |
-| MongoDB  | 27017 | Veritabanı              |
-| Backend  | 5001  | Express API             |
-| Client   | 3000  | React (Vite) Uygulaması |
-
-Durdurmak için:
+| Servis  | Port  | Açıklama                |
+| ------- | ----- | ----------------------- |
+| MongoDB | 27017 | Veritabanı              |
+| Backend | 5001  | Express API             |
+| Client  | 3000  | React (Vite) Uygulaması |
 
 ```bash
-docker-compose down
+docker-compose down      # durdur
+docker-compose down -v   # verileri de sil
 ```
 
-Veritabanı verilerini de silmek için:
+---
+
+## 🧪 Test
 
 ```bash
-docker-compose down -v
+cd backend
+npm test                 # Jest birim testleri (öneri motoru)
 ```
+
+> Öneri mantığı `services/` katmanına çıkarıldığı için veritabanına bağlanmadan izole test edilir (`tests/recommendation.service.test.js`).
 
 ---
 
 ## 🛠 Teknoloji Yığını
 
 ### Backend
-- Node.js + Express 5
-- MongoDB + Mongoose
-- JWT Authentication
-- Helmet, HPP, Rate Limiting
-- Swagger API Docs
+- Node.js + **Express 5** (CommonJS)
+- MongoDB + **Mongoose**
+- **JWT** kimlik doğrulama + **bcryptjs**, **google-auth-library** (Google OAuth)
+- **zod** doğrulama, merkezi `errorMiddleware`, `asyncHandler`
+- **Helmet**, **HPP**, **express-rate-limit** (güvenlik)
+- **winston** (loglama), **@sentry/node** (hata izleme)
+- **Swagger UI** (`swagger-ui-express` + `yamljs`)
 
 ### Client
-- React 18 + TypeScript
-- Vite (build tool)
-- Tailwind CSS v4
-- React Router v7
-- TanStack React Query v5
-- Axios
+- **React 18** + **TypeScript**
+- **Vite** (build aracı), **Tailwind CSS v4**
+- **React Router v7**, **TanStack React Query v5**
+- **axios**, **react-hook-form** + **zod**
+- **@react-oauth/google** (Google ile Giriş)
 
 ---
 
@@ -156,18 +193,66 @@ docker-compose down -v
 
 Tam liste için `docs/openapi.yaml` veya `http://localhost:5001/api-docs` (Swagger UI).
 
+### Auth — `/api/auth`
 | Method | Endpoint | Açıklama | Auth |
 | --- | --- | --- | --- |
-| POST | `/api/auth/register` | Kayıt ol | ❌ |
-| POST | `/api/auth/login` | Giriş yap | ❌ |
+| POST | `/register` | Kayıt ol | ❌ |
+| POST | `/login` | Giriş yap | ❌ |
+| POST | `/google` | Google ID token ile giriş/kayıt | ❌ |
+| GET  | `/me` | Mevcut kullanıcı bilgisi | ✅ |
+| POST | `/logout` | Çıkış | ❌ |
+
+### Recipes — `/api/recipes`
+| Method | Endpoint | Açıklama | Auth |
+| --- | --- | --- | --- |
+| GET  | `/` | Tarifleri listele (arama, filtre, sayfalama) | ❌ |
+| POST | `/` | Yeni tarif ekle | ✅ |
+| GET  | `/random` | Rastgele tarif | ❌ |
+| POST | `/search-by-ingredients` | Malzeme bazlı arama (skorlu) | ❌ |
+| GET  | `/:id` | Tarif detayı | ❌ |
+| PUT  | `/:id` | Tarif güncelle (sahip) | ✅ |
+| DELETE | `/:id` | Tarif sil (sahip) | ✅ |
+| GET  | `/:id/comments` | Tarifin yorumları | ❌ |
+| POST | `/:id/comments` | Yorum/puan ekle | ✅ |
+
+### Diğer
+| Method | Endpoint | Açıklama | Auth |
+| --- | --- | --- | --- |
+| POST | `/api/recommendations` | Malzemelere göre öneri | ❌ |
+| GET  | `/api/favorites` | Favori listesi | ✅ |
+| POST | `/api/favorites/:recipeId` | Favoriye ekle | ✅ |
+| DELETE | `/api/favorites/:recipeId` | Favoriden çıkar | ✅ |
+| DELETE | `/api/comments/:id` | Yorum sil (sahip) | ✅ |
 | GET  | `/api/users/profile` | Profil bilgisi | ✅ |
 | PUT  | `/api/users/profile` | Profili güncelle | ✅ |
-| GET  | `/api/recipes` | Tarifleri listele | ❌ |
-| POST | `/api/recipes` | Yeni tarif ekle | ✅ |
-| GET  | `/api/recipes/:id` | Tarif detayı | ❌ |
-| PUT  | `/api/recipes/:id` | Tarif güncelle (sahip) | ✅ |
-| DELETE | `/api/recipes/:id` | Tarif sil (sahip) | ✅ |
-| POST | `/api/recipes/search-by-ingredients` | Malzeme bazlı arama | ❌ |
+| PUT  | `/api/users/preferences` | Diyet tercihlerini güncelle | ✅ |
+| GET  | `/api/users/me/{stats,recipes,drafts,saved,comments}` | Profil sekmesi verileri | ✅ |
+| GET  | `/api/health` | Sağlık kontrolü | ❌ |
+
+---
+
+## ☁️ Dağıtım (Deployment)
+
+| Servis | Platform |
+| --- | --- |
+| Frontend | **Vercel** (root: `client`, env: `VITE_API_URL`, `VITE_GOOGLE_CLIENT_ID`) |
+| Backend | **Railway / Render** (env: `CLIENT_URL` — CORS için canlı frontend URL'i) |
+| Database | **MongoDB Atlas** |
+
+Detaylar için `docs/deploy.md`.
+
+---
+
+## 👥 Ekip
+
+Night Code Kitchen — 6 kişilik 1. sınıf Yazılım Mühendisliği ekibi (AI-agent destekli geliştirme):
+
+- Mehmet Furkan Akyar (PM)
+- Muhammed Ali Yücesu
+- Emre Cansever
+- Furkan Yılmaz
+- Emine Zehra Duymaz
+- Muhammed Hanifi Taş (DevOps)
 
 ---
 
