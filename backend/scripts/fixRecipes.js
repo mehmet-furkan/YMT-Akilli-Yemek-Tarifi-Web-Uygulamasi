@@ -69,6 +69,117 @@ const FIXES = [
     updates: { cookTime: 45 }, // 20 dk haşlama + 10 dk şeker + kıvam + 15 dk fırın
   },
 
+  // ── Aşure — büyük rewrite, geleneksel malzemeleri ekledik
+  // Mevcut: 10 malzeme — pirinç, portakal/limon kabuğu, karanfil, elma,
+  // badem, fındık, antep fıstığı, nar yoktu. Yemek.com'un 15 kişilik tarifini
+  // 8 kişilik ev versiyonuna oranlayıp ekledim.
+  // Kaynak: https://yemek.com/tarif/asure/
+  {
+    title: "Aşure",
+    replaceInstructions: [
+      "Aşurelik buğdayı yıkayıp 8-12 saat soğuk suda bekletin.",
+      "Bekleyen buğdayı suyunu süzüp 2 litre sıcak suda 1-1.5 saat kısık ateşte yumuşayana kadar pişirin.",
+      "Pirinç, portakal kabuğu, limon kabuğu ve 1 litre sıcak su ekleyip 20 dakika daha pişirin.",
+      "Karanfilleri ayrı bir kâsede 1 su bardağı suyla kaynatıp süzün (karanfil suyu).",
+      "Haşlanmış nohut ve fasulyeyi tencereye ekleyin.",
+      "Dilimlenmiş elma, kuru üzüm, kuş üzümü, doğranmış kuru incir ve kayısıyı ekleyip 20 dakika pişirin.",
+      "Şekeri ve süzülmüş karanfil suyunu katın, 15 dakika daha kaynatın.",
+      "Ocaktan alıp 1-2 saat oda sıcaklığında ılınmaya bırakın (kıvam alır).",
+      "Kâselere paylaştırın. Üzerine ceviz, badem, antep fıstığı serpip tarçınla süsleyin.",
+      "İsteğe bağlı nar tanesi ve susam serperek servis edin.",
+    ],
+    updates: {
+      prepTime: 720, // 12 saat bekleme
+      cookTime: 165, // 1.5 sa buğday + 20 dk + 20 dk + 15 dk
+      ingredients: [
+        // Ana taneli/baklagil
+        { name: "aşurelik buğday", amount: "1", unit: "su bardağı" },
+        { name: "pirinç", amount: "3", unit: "yemek kaşığı" },
+        { name: "haşlanmış nohut", amount: "0.5", unit: "su bardağı" },
+        { name: "haşlanmış kuru fasulye", amount: "0.5", unit: "su bardağı" },
+        // Aroma
+        { name: "portakal kabuğu rendesi", amount: "1", unit: "yemek kaşığı" },
+        { name: "limon kabuğu rendesi", amount: "1", unit: "yemek kaşığı" },
+        { name: "karanfil", amount: "5", unit: "adet" },
+        // Meyve
+        { name: "elma", amount: "1", unit: "adet" },
+        { name: "kuru üzüm", amount: "2", unit: "yemek kaşığı" },
+        { name: "kuş üzümü", amount: "2", unit: "yemek kaşığı" },
+        { name: "kuru incir", amount: "5", unit: "adet" },
+        { name: "kuru kayısı", amount: "5", unit: "adet" },
+        // Tatlandırıcı + sıvı
+        { name: "toz şeker", amount: "1.5", unit: "su bardağı" },
+        { name: "sıcak su", amount: "3", unit: "litre" },
+        // Üzeri (kuruyemiş + süs)
+        { name: "ceviz içi", amount: "3", unit: "yemek kaşığı" },
+        { name: "badem", amount: "2", unit: "yemek kaşığı" },
+        { name: "antep fıstığı", amount: "2", unit: "yemek kaşığı" },
+        { name: "tarçın", amount: "1", unit: "yemek kaşığı" },
+        { name: "nar tanesi", amount: "0.5", unit: "su bardağı", optional: true },
+        { name: "susam", amount: "1", unit: "tatlı kaşığı", optional: true },
+      ],
+    },
+  },
+
+  // ── Kazandibi — tereyağı eklendi, karamelize ve soğutma adımları detaylandırıldı
+  // Mevcut tarifte tereyağı eksikti ve karamelize tekniği çok özet ("ocakta yakın")
+  // belirsizdi. Yemek.com tarif yöntemiyle daha açık anlatım.
+  // Kaynak: https://yemek.com/tarif/kazandibi/
+  {
+    title: "Kazandibi",
+    replaceInstructions: [
+      "Tepsiye pudra şekerini yayıp orta ateşte sürekli karıştırarak tüm şeker eriyip altın karamel rengini alana kadar 4-5 dakika yakın.",
+      "Derin bir tencerede süt, şeker, nişasta ve pirinç ununu telçırpıcıyla iyice çırpıp ocağa alın.",
+      "Sürekli karıştırarak orta ateşte kıvam alıp kaynayana kadar 15 dakika pişirin (göz göz olmaya başlayınca koyulaştığını anlayın).",
+      "Vanilya ve tereyağını ekleyip karıştırın, ocaktan alın.",
+      "Karamelize tepsinin üzerine kepçeyle ince bir muhallebi katı yayın, tepsiyi 1 tur daha ateşte gezdirin (kazandibi izi için).",
+      "Kalan muhallebiyi karamelize tabakanın üzerine dökün, oda sıcaklığında 1 saat soğutun.",
+      "Buzdolabında en az 4 saat dinlendirin.",
+      "Soğuduktan sonra ters çevirip kalıbından çıkarın, dilimleyip spatulayla rulo şeklinde sarın ve servis edin.",
+    ],
+    updates: {
+      prepTime: 10,
+      cookTime: 35, // 5 dk karamelize + 15 dk muhallebi + 1 sa soğutma + buzdolabı
+      ingredients: [
+        { name: "süt", amount: "1.2", unit: "litre" },
+        { name: "toz şeker", amount: "1", unit: "su bardağı" },
+        { name: "nişasta", amount: "5", unit: "yemek kaşığı" },
+        { name: "pirinç unu", amount: "2", unit: "yemek kaşığı" },
+        { name: "tereyağı", amount: "1", unit: "yemek kaşığı" },
+        { name: "vanilya", amount: "1", unit: "paket" },
+        { name: "pudra şekeri (karamelize için)", amount: "4", unit: "yemek kaşığı" },
+      ],
+    },
+  },
+
+  // ── Künefe — peynir türü netleştirildi, pişirme tekniği detaylandırıldı
+  // Mevcut "tuzsuz peynir" çok genelti ve "iki yüzünü kızartın" tekniği belirsizdi.
+  // Geleneksel olarak Antakya peyniri / dil peyniri kullanılır.
+  // Kaynak: https://yemek.com/tarif/kunefe/
+  {
+    title: "Künefe",
+    replaceInstructions: [
+      "Şerbet için şeker ve suyu kısık ateşte kaynatın, limon suyunu ekleyip 20 dakika daha pişirin (kaşıktan ip gibi süzülmeli). Soğumaya bırakın.",
+      "Tel kadayıfı bıçakla küçük doğrayın, eritilmiş tereyağıyla iyice ovuşturarak harmanlayın.",
+      "Sahanın yarısına kadayıfın yarısını yayıp avuç içiyle bastırın.",
+      "Üstüne ince dilimlenmiş peyniri eşit yayın, kalan kadayıfla kapatıp tekrar bastırın.",
+      "Kısık ateşte alt taraf altın renge gelene kadar 5-7 dakika pişirin.",
+      "Geniş bir tabak yardımıyla sahanı ters çevirin, künefeyi sahana geri kaydırıp diğer tarafını 5-7 dakika daha kızartın.",
+      "Çıkar çıkmaz soğuk şerbeti üzerine dökün, dövülmüş antep fıstığı serpip sıcak servis edin.",
+    ],
+    updates: {
+      ingredients: [
+        { name: "tel kadayıf", amount: "300", unit: "gram" },
+        { name: "tuzsuz Antakya peyniri (veya dil peyniri)", amount: "250", unit: "gram" },
+        { name: "tereyağı", amount: "150", unit: "gram" },
+        { name: "toz şeker", amount: "2", unit: "su bardağı" },
+        { name: "su", amount: "2", unit: "su bardağı" },
+        { name: "limon suyu", amount: "1", unit: "yemek kaşığı" },
+        { name: "antep fıstığı (dövülmüş)", amount: "3", unit: "yemek kaşığı" },
+      ],
+    },
+  },
+
   // ── #2 İskender — yemek.com'a göre içerik zenginleştirildi
   // Mevcut tarif sadece 5 malzemeydi (et, pide, yoğurt, domates sosu, tereyağı)
   // — domates sosu ve et marinasyonu için detay eksikti.
