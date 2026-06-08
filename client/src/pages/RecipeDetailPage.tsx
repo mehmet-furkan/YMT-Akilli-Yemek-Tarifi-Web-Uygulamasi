@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../lib/axios';
@@ -7,6 +7,9 @@ import type { Comment } from '../types/comment';
 import { useAuth } from '../hooks/useAuth';
 import { useFavorites } from '../hooks/useFavorites';
 import { useRecipeComments } from '../hooks/useRecipeComments';
+import { ServingStepper } from '../components/feature/ServingStepper';
+import { ShareMenu } from '../components/feature/ShareMenu';
+import { scaleAmount } from '../utils/scaleAmount';
 
 async function fetchRecipe(id: string): Promise<Recipe> {
   const { data } = await api.get<ApiResponse<Recipe>>(`/recipes/${id}`);
@@ -27,6 +30,18 @@ export default function RecipeDetailPage() {
     queryFn: () => fetchRecipe(id!),
     enabled: Boolean(id),
   });
+
+  // Porsiyon stepper state'i.
+  // null = "henüz ayarlanmadı, recipe'in defaultunu kullan"
+  // Recipe yüklendikten sonra effect ile ilk değer set edilir; sonrasında
+  // kullanıcı değişikliği korunur (yeniden refetch tarifin orijinaline geri sarmaz).
+  const [servings, setServings] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (recipe && servings === null) {
+      setServings(recipe.servings ?? 1);
+    }
+  }, [recipe, servings]);
 
   if (isLoading) {
     return <RecipeDetailSkeleton />;
@@ -51,6 +66,9 @@ export default function RecipeDetailPage() {
   }
 
   const totalTime = (recipe.prepTime ?? 0) + recipe.cookTime;
+  const originalServings = recipe.servings ?? 1;
+  const currentServings = servings ?? originalServings;
+  const multiplier = currentServings / originalServings;
 
   return (
     <main className="min-h-screen bg-stone-50 pb-16">
@@ -133,15 +151,26 @@ export default function RecipeDetailPage() {
                 <Stat icon="🔪" label="Hazırlık" value={`${recipe.prepTime} dk`} />
               )}
               <Stat icon="🍳" label="Pişirme" value={`${recipe.cookTime} dk`} />
-              <Stat icon="👥" label="Kişi" value={`${recipe.servings ?? 1}`} />
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-lg" aria-hidden="true">👥</span>
+                <ServingStepper
+                  servings={currentServings}
+                  originalServings={originalServings}
+                  onChange={setServings}
+                />
+              </div>
               {recipe.nutrition?.calories != null && (
-                <Stat icon="🔥" label="Kcal/Porsiyon" value={`≈ ${recipe.nutrition.calories} kcal`} />
+                <Stat
+                  icon="🔥"
+                  label="Kcal/Porsiyon"
+                  value={`≈ ${Math.round(recipe.nutrition.calories * multiplier)} kcal`}
+                />
               )}
             </div>
 
             {/* Besin değerleri akordionu — sadece veri varsa göster */}
             {recipe.nutrition && (
-              <NutritionAccordion nutrition={recipe.nutrition} />
+              <NutritionAccordion nutrition={recipe.nutrition} multiplier={multiplier} />
             )}
 
             {/* Two-column layout on sm+ */}
@@ -152,26 +181,29 @@ export default function RecipeDetailPage() {
                   🧺 Malzemeler
                 </h2>
                 <ul className="space-y-2">
-                  {recipe.ingredients.map((ing, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-start gap-2 text-sm text-stone-700"
-                    >
-                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" aria-hidden="true" />
-                      <span>
-                        {ing.amount && (
-                          <span className="font-medium">
-                            {ing.amount}
-                            {ing.unit ? ` ${ing.unit}` : ''}{' '}
-                          </span>
-                        )}
-                        {ing.name}
-                        {ing.optional && (
-                          <span className="text-stone-400 text-xs ml-1">(isteğe bağlı)</span>
-                        )}
-                      </span>
-                    </li>
-                  ))}
+                  {recipe.ingredients.map((ing, idx) => {
+                    const scaled = scaleAmount(ing.amount, multiplier);
+                    return (
+                      <li
+                        key={idx}
+                        className="flex items-start gap-2 text-sm text-stone-700"
+                      >
+                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" aria-hidden="true" />
+                        <span>
+                          {scaled && (
+                            <span className="font-medium">
+                              {scaled}
+                              {ing.unit ? ` ${ing.unit}` : ''}{' '}
+                            </span>
+                          )}
+                          {ing.name}
+                          {ing.optional && (
+                            <span className="text-stone-400 text-xs ml-1">(isteğe bağlı)</span>
+                          )}
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </section>
 
@@ -206,6 +238,9 @@ export default function RecipeDetailPage() {
                 ))}
               </div>
             )}
+
+            {/* Share menu */}
+            <ShareMenu title={recipe.title} />
 
             {/* Rating + Comments */}
             <CommentsSection recipeId={recipe._id} />
