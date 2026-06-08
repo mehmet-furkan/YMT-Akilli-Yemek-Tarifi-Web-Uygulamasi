@@ -145,9 +145,8 @@ export default function RecipeDetailPage() {
               </p>
             )}
 
-            {/* Stats row — ShareMenu sol başta, sonra süreler + porsiyon stepper */}
+            {/* Stats row — süreler + porsiyon stepper, ShareMenu en sağda (ml-auto ile itilir) */}
             <div className="flex flex-wrap gap-5 py-4 border-y border-stone-100 mb-4 text-sm">
-              <ShareMenu title={recipe.title} />
               <Stat icon="⏱️" label="Toplam Süre" value={formatDuration(totalTime)} />
               {(recipe.prepTime ?? 0) > 0 && (
                 <Stat icon="🔪" label="Hazırlık" value={formatDuration(recipe.prepTime)} />
@@ -170,6 +169,10 @@ export default function RecipeDetailPage() {
                   value={`≈ ${Math.round(recipe.nutrition.calories * multiplier)} kcal`}
                 />
               )}
+              {/* ml-auto: ShareMenu'yu satırın en sağına iter */}
+              <div className="ml-auto">
+                <ShareMenu title={recipe.title} />
+              </div>
             </div>
 
             {/* Besin değerleri akordionu — sadece veri varsa göster */}
