@@ -10,6 +10,7 @@ import { useRecipeComments } from '../hooks/useRecipeComments';
 import { ServingStepper } from '../components/feature/ServingStepper';
 import { ShareMenu } from '../components/feature/ShareMenu';
 import { scaleAmount } from '../utils/scaleAmount';
+import { formatDuration } from '../utils/formatDuration';
 
 async function fetchRecipe(id: string): Promise<Recipe> {
   const { data } = await api.get<ApiResponse<Recipe>>(`/recipes/${id}`);
@@ -144,13 +145,16 @@ export default function RecipeDetailPage() {
               </p>
             )}
 
-            {/* Stats row */}
+            {/* Stats row — ShareMenu sol başta, sonra süreler + porsiyon stepper */}
             <div className="flex flex-wrap gap-5 py-4 border-y border-stone-100 mb-4 text-sm">
-              <Stat icon="⏱️" label="Toplam Süre" value={`${totalTime} dk`} />
+              <ShareMenu title={recipe.title} />
+              <Stat icon="⏱️" label="Toplam Süre" value={formatDuration(totalTime)} />
               {(recipe.prepTime ?? 0) > 0 && (
-                <Stat icon="🔪" label="Hazırlık" value={`${recipe.prepTime} dk`} />
+                <Stat icon="🔪" label="Hazırlık" value={formatDuration(recipe.prepTime)} />
               )}
-              <Stat icon="🍳" label="Pişirme" value={`${recipe.cookTime} dk`} />
+              {recipe.cookTime > 0 && (
+                <Stat icon="🍳" label="Pişirme" value={formatDuration(recipe.cookTime)} />
+              )}
               <div className="flex flex-col items-center gap-0.5">
                 <span className="text-lg" aria-hidden="true">👥</span>
                 <ServingStepper
@@ -182,7 +186,7 @@ export default function RecipeDetailPage() {
                 </h2>
                 <ul className="space-y-2">
                   {recipe.ingredients.map((ing, idx) => {
-                    const scaled = scaleAmount(ing.amount, multiplier);
+                    const scaled = scaleAmount(ing.amount, multiplier, ing.unit);
                     return (
                       <li
                         key={idx}
@@ -238,9 +242,6 @@ export default function RecipeDetailPage() {
                 ))}
               </div>
             )}
-
-            {/* Share menu */}
-            <ShareMenu title={recipe.title} />
 
             {/* Rating + Comments */}
             <CommentsSection recipeId={recipe._id} />

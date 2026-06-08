@@ -1,5 +1,6 @@
 ﻿import { useState, useCallback } from "react";
 import apiClient from "../lib/axios";
+import { formatDuration } from "../utils/formatDuration";
 import type { ApiResponse } from "../contexts/AuthContext";
 
 // ─── Tipler ───────────────────────────────────────────────────────────────────
@@ -314,7 +315,7 @@ function RecipeCard({ recipe, selected }: { recipe: Recipe; selected: string[] }
 
         {/* Meta */}
         <div style={{ display: "flex", gap: "14px", fontSize: "12px", color: "#475569", marginBottom: "12px", flexWrap: "wrap" }}>
-          {recipe.cookTime != null && <span>⏱ {recipe.cookTime} dk</span>}
+          {recipe.cookTime != null && <span>⏱ {formatDuration(recipe.cookTime)}</span>}
           {recipe.servings != null && <span>👤 {recipe.servings} kişilik</span>}
           {recipe.ingredients.length > 0 && <span>🧄 {recipe.ingredients.length} malzeme</span>}
         </div>

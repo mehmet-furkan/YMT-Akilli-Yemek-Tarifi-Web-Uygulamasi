@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { IngredientChipInput } from "../components/feature/IngredientChipInput";
 import { useRecommendations } from "../hooks/useRecommendations";
 import { useAuth } from "../hooks/useAuth";
+import { formatDuration } from "../utils/formatDuration";
 import type { RecommendationResult } from "../types/recipe";
 
 const MIN_INGREDIENTS = 3;
@@ -113,7 +114,7 @@ function ResultCard({ result }: { result: RecommendationResult }) {
             %{score} eşleşti
           </span>
           {recipe.cookTime && (
-            <span className="text-stone-400 text-xs">⏱ {recipe.cookTime} dk</span>
+            <span className="text-stone-400 text-xs">⏱ {formatDuration(recipe.cookTime)}</span>
           )}
           {recipe.difficulty && (
             <span className="text-stone-400 text-xs">{recipe.difficulty}</span>
