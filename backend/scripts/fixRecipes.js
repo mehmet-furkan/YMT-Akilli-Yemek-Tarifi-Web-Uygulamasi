@@ -426,6 +426,72 @@ const FIXES = [
     },
   },
 
+  // ── Piyaz — limon ve karabiber eklendi (klasik piyaz sosunun yarısı)
+  // Mevcut tarifte sirke var ama limon yok. Yemek.com'a göre klasik piyaz
+  // sosu limon + sirke ikilisinden oluşur. Karabiber de eksikti.
+  // Mor soğan spesifik olarak belirtildi (klasik piyaz mor soğanla yapılır).
+  // Kaynak: https://yemek.com/tarif/piyaz/
+  {
+    title: "Piyaz",
+    replaceInstructions: [
+      "Mor soğanları piyazlık ince doğrayın, sumak ve tuzla ovup acısını alın.",
+      "Maydanozu ince kıyın, domatesi küp doğrayın, yumurtaları haşlayıp dilimleyin.",
+      "Haşlanmış fasulyeyi soğan, maydanoz ve domatesle bir kâseye alıp karıştırın.",
+      "Zeytinyağı, limon suyu, sirke, karabiber ve kalan sumakla soslayın.",
+      "Üzerini yumurta dilimleriyle süsleyip soğuk servis edin.",
+    ],
+    updates: {
+      ingredients: [
+        { name: "haşlanmış kuru fasulye", amount: "2", unit: "su bardağı" },
+        { name: "mor soğan", amount: "1", unit: "adet" },
+        { name: "maydanoz", amount: "0.5", unit: "demet" },
+        { name: "yumurta", amount: "2", unit: "adet" },
+        { name: "domates", amount: "1", unit: "adet" },
+        { name: "zeytinyağı", amount: "3", unit: "yemek kaşığı" },
+        { name: "sirke", amount: "1", unit: "yemek kaşığı" },
+        { name: "limon", amount: "0.25", unit: "adet" },
+        { name: "sumak", amount: "2", unit: "tatlı kaşığı" },
+        { name: "karabiber", amount: "1", unit: "çay kaşığı" },
+        { name: "tuz", amount: "1", unit: "çay kaşığı" },
+      ],
+    },
+  },
+
+  // ── Acılı Ezme — nane, limon, taze soğan eklendi (klasik Gaziantep usulü)
+  // Mevcut tarif: kuru soğan, nane yok, limon yok. Klasik acılı ezme:
+  // taze soğan + nane + limon + nar ekşisi şeklinde. Robot uyarısı eklendi.
+  // Kaynak: https://yemek.com/tarif/acili-ezme/
+  {
+    title: "Acılı Ezme",
+    replaceInstructions: [
+      "Tüm sebzeleri (domates, biber, taze soğan, sarımsak) bıçakla çok ince kıyın.",
+      "Mutfak robotuna geçirmeyin — su salar ve ezmesi olmaz.",
+      "Maydanozu ince kıyın, kıyılmış sebzelerle karıştırın.",
+      "Biber salçası, kırmızı toz biber, kuru nane, tuz ve pul biberi ekleyin.",
+      "Zeytinyağı, taze sıkılmış limon suyu ve nar ekşisini gezdirin.",
+      "İyice karıştırıp 30 dakika dinlendirerek lezzetlerin oturmasını sağlayın.",
+    ],
+    updates: {
+      prepTime: 30,
+      ingredients: [
+        { name: "domates", amount: "3", unit: "adet" },
+        { name: "kırmızı biber", amount: "2", unit: "adet" },
+        { name: "yeşil sivri biber", amount: "2", unit: "adet" },
+        { name: "taze soğan", amount: "6", unit: "dal" },
+        { name: "sarımsak", amount: "3", unit: "diş" },
+        { name: "maydanoz", amount: "0.5", unit: "demet" },
+        { name: "biber salçası", amount: "1", unit: "yemek kaşığı" },
+        { name: "kuru nane", amount: "1", unit: "tatlı kaşığı" },
+        { name: "toz kırmızı biber", amount: "2", unit: "çay kaşığı" },
+        { name: "pul biber", amount: "1", unit: "tatlı kaşığı" },
+        { name: "nar ekşisi", amount: "2", unit: "yemek kaşığı" },
+        { name: "zeytinyağı", amount: "3", unit: "yemek kaşığı" },
+        { name: "limon", amount: "1", unit: "adet" },
+        { name: "tuz", amount: "1", unit: "çay kaşığı" },
+      ],
+    },
+  },
+
   // ── #2 İskender — yemek.com'a göre içerik zenginleştirildi
   // Mevcut tarif sadece 5 malzemeydi (et, pide, yoğurt, domates sosu, tereyağı)
   // — domates sosu ve et marinasyonu için detay eksikti.
