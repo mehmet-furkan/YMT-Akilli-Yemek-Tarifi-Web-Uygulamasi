@@ -63,9 +63,24 @@ const UserSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, "Lütfen şifrenizi giriniz"],
+      // Google ile kayıt olan kullanıcılar için şifre zorunlu değildir.
+      // Email + şifre ile kayıt olanlar için zorunluluk korunur.
+      required: [
+        function () {
+          return !this.googleId;
+        },
+        "Lütfen şifrenizi giriniz",
+      ],
       minlength: [6, "Şifre en az 6 karakter olmalıdır"],
       select: false, // Sorgularda şifre varsayılan olarak döndürülmez
+    },
+    // Google OAuth ID — sparse + unique: email/şifre user'larında null kalır,
+    // Google ile gelen user'da Google'ın "sub" claim'i tutulur (account linking).
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      select: false, // Detay sayfalarda gizli kalır
     },
     preferences: {
       diet: {
@@ -107,8 +122,8 @@ const UserSchema = new mongoose.Schema(
 
 // --- Middleware: Kayıt öncesi şifreyi hashle ---
 UserSchema.pre("save", async function () {
-  // Şifre değişmediyse hashleme
-  if (!this.isModified("password")) {
+  // Şifre değişmediyse veya hiç şifre yoksa (Google user) hashleme
+  if (!this.isModified("password") || !this.password) {
     return;
   }
 

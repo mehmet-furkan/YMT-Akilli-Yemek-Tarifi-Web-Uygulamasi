@@ -3,10 +3,11 @@ const { body, validationResult } = require("express-validator");
 const router = express.Router();
 
 // getMe ve logoutUser fonksiyonlarını da import ediyoruz
-const { registerUser, authUser, getMe, logoutUser } = require("../controllers/authController");
+const { registerUser, authUser, getMe, logoutUser, googleAuth } = require("../controllers/authController");
 
 // Auth middleware'i import ediyoruz (middleware dosyasında fonksiyonun adını 'protect' yaptıysan bu şekilde kalabilir, farklıysa burayı güncellemelisin)
-const { protect } = require("../middleware/authMiddleware"); 
+const { protect } = require("../middleware/authMiddleware");
+const { authLimiter } = require("../lib/rateLimiters");
 
 const registerValidation = [
   body("name").notEmpty().withMessage("İsim alanı boş bırakılamaz"),
@@ -24,8 +25,13 @@ const registerValidation = [
 router.post("/register", registerValidation, registerUser);
 router.post("/login", authUser);
 
+// Google Sign-In — POST /api/auth/google
+// Body: { credential: <Google ID token JWT> }
+// Account linking: aynı email'le mevcut user'a otomatik bağlanır
+router.post("/google", authLimiter, googleAuth);
+
 // YENİ EKLENEN KORUMALI ROTALAR
-router.get("/me", protect, getMe); 
+router.get("/me", protect, getMe);
 router.post("/logout", logoutUser);
 
 module.exports = router;

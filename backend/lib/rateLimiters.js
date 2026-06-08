@@ -21,6 +21,22 @@ const commentLimiter = rateLimit({
   },
 });
 
+/**
+ * Auth endpoint'leri için: bir IP 15 dakikada max 20 deneme.
+ * Login, register ve OAuth (Google) için ortak kullanılır — brute force koruması.
+ */
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 dakika
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Çok fazla deneme. Lütfen 15 dakika sonra tekrar deneyin.",
+  },
+});
+
 module.exports = {
   commentLimiter,
+  authLimiter,
 };

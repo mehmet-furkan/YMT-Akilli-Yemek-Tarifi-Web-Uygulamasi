@@ -5,6 +5,7 @@ import { z } from "zod";
 import { Link, useNavigate } from "react-router-dom";
 import apiClient from "../lib/axios";
 import { useAuth } from "../hooks/useAuth";
+import { GoogleSignInButton } from "../components/feature/GoogleSignInButton";
 import type { ApiResponse } from "../contexts/AuthContext";
 
 // ─── Zod Şeması ───────────────────────────────────────────────────────────────
@@ -225,6 +226,18 @@ export default function LoginPage() {
             ⚠️ {serverError}
           </div>
         )}
+
+        {/* Google Sign-In */}
+        <div style={{ marginBottom: "20px", display: "flex", justifyContent: "center" }}>
+          <GoogleSignInButton onError={(msg) => setServerError(msg)} />
+        </div>
+
+        {/* Divider */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "20px 0", color: "#475569", fontSize: "12px", fontWeight: 600, letterSpacing: "0.5px" }}>
+          <div style={{ flex: 1, height: "1px", background: "rgba(148,163,184,0.2)" }} />
+          <span>VEYA</span>
+          <div style={{ flex: 1, height: "1px", background: "rgba(148,163,184,0.2)" }} />
+        </div>
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate style={S.form}>
           {/* E-posta */}

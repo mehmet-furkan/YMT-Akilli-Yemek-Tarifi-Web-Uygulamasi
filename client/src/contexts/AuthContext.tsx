@@ -48,6 +48,7 @@ export interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
+  loginWithGoogle: (credential: string) => Promise<void>;
   logout: () => void;
   me: () => Promise<User>;
   setUser: (user: User) => void;
@@ -153,6 +154,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser({ _id, name, email });
   }, []);
 
+  // ── loginWithGoogle ────────────────────────────────────────────────────────
+  // Google ID token (credential) backend'e gönderilir, backend verify edip
+  // mevcut JWT format'ında token döner. Sonrası normal login akışıyla aynı.
+
+  const loginWithGoogle = useCallback(async (credential: string) => {
+    const res = await apiClient.post<ApiResponse<{ _id: string; name: string; email: string; token: string }>>(
+      "/auth/google",
+      { credential }
+    );
+
+    const { token: newToken, _id, name, email } = res.data.data;
+
+    setStoredToken(newToken);
+    setToken(newToken);
+    setUser({ _id, name, email });
+  }, []);
+
   // ── logout ─────────────────────────────────────────────────────────────────
 
   const logout = useCallback(() => {
@@ -178,6 +196,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isAuthenticated: !!user,
     isLoading,
     login,
+    loginWithGoogle,
     logout,
     me,
     setUser,
