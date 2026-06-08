@@ -312,6 +312,120 @@ const FIXES = [
     },
   },
 
+  // ── Menemen — zeytinyağı + tereyağı karışımı, pul biber, maydanoz eklendi
+  // Mevcut: sadece tereyağı, pul biber yok, maydanoz yok.
+  // Klasik menemende yağ karışımı + pul biber + üzeri maydanoz olmazsa olmaz.
+  // Kaynak: https://yemek.com/tarif/menemen/
+  {
+    title: "Menemen",
+    replaceInstructions: [
+      "Sivri biberleri ince halkalar halinde doğrayın.",
+      "Tavada zeytinyağı ve tereyağını eritin, biberleri orta ateşte 3-4 dakika kavurun.",
+      "Domatesleri rendeleyip ekleyin, suyunu çekmeye yakın hale gelene kadar 5-6 dakika pişirin.",
+      "Tuz, karabiber ve pul biber serpip karıştırın.",
+      "Yumurtaları üzerine kırıp tuzla hafifçe çırpın, orta ateşte sürekli karıştırarak 3-4 dakika pişirin.",
+      "Ocaktan alıp üzerine ince kıyılmış maydanoz serpip sıcak servis edin.",
+    ],
+    updates: {
+      ingredients: [
+        { name: "yumurta", amount: "3", unit: "adet" },
+        { name: "domates", amount: "3", unit: "adet" },
+        { name: "sivri biber", amount: "3", unit: "adet" },
+        { name: "zeytinyağı", amount: "1", unit: "yemek kaşığı" },
+        { name: "tereyağı", amount: "1", unit: "yemek kaşığı" },
+        { name: "tuz", amount: "1", unit: "çay kaşığı" },
+        { name: "karabiber", amount: "1", unit: "tutam" },
+        { name: "pul biber", amount: "0.5", unit: "tatlı kaşığı" },
+        { name: "maydanoz (üzeri için)", amount: "2", unit: "yemek kaşığı" },
+      ],
+    },
+  },
+
+  // ── Çılbır — nane ve karabiber üst yağı klasiği, su miktarı netleştirildi
+  // Mevcut tarifte üst tereyağına SADECE pul biber atılıyor. Klasik çılbır
+  // tereyağına pul biber + nane + karabiber üçlüsü yakılır.
+  // Kaynak: https://yemek.com/tarif/cilbir/
+  {
+    title: "Çılbır",
+    replaceInstructions: [
+      "Süzme yoğurda ezilmiş sarımsağı ve tuzu katıp karıştırın, servis tabağının altına eşit yayın.",
+      "1 litre suyu kaynatın, fokurdayıp dururken sirkeyi ekleyip ısıyı kısın.",
+      "Yumurtaları teker teker kepçe veya bardakla suya nazikçe bırakıp 3-4 dakika poşe edin (sarısı rafadan kalmalı).",
+      "Poşe yumurtaları kevgirle alıp yoğurdun üstüne yerleştirin.",
+      "Ayrı bir tavada tereyağını eritin, pul biber, kuru nane ve karabiberi ekleyip 30 saniye yakın.",
+      "Baharatlı tereyağını çılbırın üstüne gezdirip sıcak servis edin.",
+    ],
+    updates: {
+      ingredients: [
+        { name: "yumurta", amount: "2", unit: "adet" },
+        { name: "süzme yoğurt", amount: "1", unit: "su bardağı" },
+        { name: "sarımsak", amount: "1", unit: "diş" },
+        { name: "tereyağı", amount: "2", unit: "yemek kaşığı" },
+        { name: "elma sirkesi", amount: "2", unit: "yemek kaşığı" },
+        { name: "su (poşe için)", amount: "1", unit: "litre" },
+        { name: "pul biber", amount: "1", unit: "tatlı kaşığı" },
+        { name: "kuru nane", amount: "1", unit: "tatlı kaşığı" },
+        { name: "karabiber", amount: "1", unit: "çay kaşığı" },
+        { name: "tuz", amount: "1", unit: "tutam" },
+      ],
+    },
+  },
+
+  // ── Mıhlama — süt + su eklendi (sıvısız mıhlama olmaz)
+  // Mevcut tarif: tereyağı + un + peynir — sıvı yok. Yemek.com'da klasik
+  // teknik: tereyağında un kavurma + süt/su ekleme + peynir katma.
+  // Sıvısız versiyon erimiş peynir-yağ olur, hamur olmaz.
+  // Kaynak: https://yemek.com/tarif/muhlama/
+  {
+    title: "Mıhlama",
+    replaceInstructions: [
+      "Sahanda tereyağını orta ateşte eritin.",
+      "Mısır ununu ekleyip 2 dakika sürekli karıştırarak kavurun (yakmadan).",
+      "Sütü ve suyu yavaşça ekleyip topak olmaması için telçırpıcıyla karıştırın.",
+      "Karışım kıvam almaya başlayınca ısıyı kısın, rendelenmiş tel peyniri (kolot/Trabzon) ekleyin.",
+      "Peynir tellenip eriyene kadar fazla karıştırmadan minik dokunuşlarla pişirin.",
+      "Sıcak sıcak, ekmek ile servis edin.",
+    ],
+    updates: {
+      prepTime: 5,
+      cookTime: 15,
+      ingredients: [
+        { name: "tereyağı", amount: "4", unit: "yemek kaşığı" },
+        { name: "mısır unu", amount: "3", unit: "yemek kaşığı" },
+        { name: "süt", amount: "1", unit: "su bardağı" },
+        { name: "su", amount: "1.5", unit: "su bardağı" },
+        { name: "kolot peyniri (veya Trabzon tel peyniri)", amount: "200", unit: "gram" },
+        { name: "tuz", amount: "1", unit: "tutam" },
+      ],
+    },
+  },
+
+  // ── Patatesli Yumurta — maydanoz eklendi (üst süs)
+  // Yemek.com'da maydanoz var, bizde yoktu. Küçük ama klasik bir detay.
+  // Kaynak: https://yemek.com/tarif/patatesli-yumurta/
+  {
+    title: "Patatesli Yumurta",
+    replaceInstructions: [
+      "Patatesleri küçük küpler halinde doğrayın.",
+      "Tavada zeytinyağını kızdırın, patatesleri ekleyip kapağını kapatın.",
+      "Orta-kısık ateşte ara sıra karıştırarak 15-20 dakika yumuşayana kadar pişirin.",
+      "Tuz, karabiber ve pul biberi serpip karıştırın.",
+      "Yumurtaları üzerine kırın, kapağı kapatıp sarısı rafadan kalacak şekilde 1-2 dakika pişirin.",
+      "Üzerine ince kıyılmış taze maydanoz serpip sıcak servis edin.",
+    ],
+    updates: {
+      ingredients: [
+        { name: "patates", amount: "3", unit: "adet" },
+        { name: "yumurta", amount: "3", unit: "adet" },
+        { name: "zeytinyağı", amount: "3", unit: "yemek kaşığı" },
+        { name: "tuz", amount: "1", unit: "çay kaşığı" },
+        { name: "karabiber", amount: "1", unit: "tutam" },
+        { name: "pul biber", amount: "1", unit: "tutam" },
+        { name: "maydanoz (üzeri için)", amount: "2", unit: "yemek kaşığı" },
+      ],
+    },
+  },
+
   // ── #2 İskender — yemek.com'a göre içerik zenginleştirildi
   // Mevcut tarif sadece 5 malzemeydi (et, pide, yoğurt, domates sosu, tereyağı)
   // — domates sosu ve et marinasyonu için detay eksikti.
