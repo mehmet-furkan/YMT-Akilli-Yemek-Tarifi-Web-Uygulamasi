@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import type { Recipe } from '../../types/recipe';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useAuth } from '../../hooks/useAuth';
+import { formatDuration } from '../../utils/formatDuration';
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -190,7 +191,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
                   clipRule="evenodd"
                 />
               </svg>
-              {totalTime} dk
+              {formatDuration(totalTime)}
             </span>
 
             {/* Servings */}
