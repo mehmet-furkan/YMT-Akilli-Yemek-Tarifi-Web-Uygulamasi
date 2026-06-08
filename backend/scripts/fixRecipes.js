@@ -180,6 +180,138 @@ const FIXES = [
     },
   },
 
+  // ── Tarhana Çorbası — sarımsak eksikti, yumuşatma tekniği yanlıştı
+  // Mevcut: "1 saat suda bekletin" → klasik tekniği oda sıcaklığında suyla
+  // çırpılarak yumuşatma. Sarımsak klasik tarhana çorbasının olmazsa olmazı.
+  // Nane çorbanın içinde, üst süs değil.
+  // Kaynak: https://yemek.com/tarif/tarhana-corbasi/
+  {
+    title: "Tarhana Çorbası",
+    replaceInstructions: [
+      "Tarhana, nane ve 2 su bardağı oda sıcaklığında suyu derin bir kâsede telçırpıcıyla çırparak yumuşatın, 15 dakika dinlendirin.",
+      "Tencerede tereyağı ve sıvı yağı eritin, ezilmiş sarımsağı 30 saniye kavurun.",
+      "Salçayı ekleyip 1 dakika daha kavurun (yakmayın).",
+      "Yumuşamış tarhana karışımını ekleyip karıştırın, kalan 5 su bardağı sıcak suyu yavaşça katın.",
+      "Sürekli karıştırarak kaynayana kadar pişirin, tuzu ekleyip 15 dakika daha pişirin.",
+      "Servis sırasında üzerine pul biberli kızdırılmış tereyağı gezdirin.",
+    ],
+    updates: {
+      prepTime: 15,
+      cookTime: 20,
+      ingredients: [
+        { name: "tarhana", amount: "4", unit: "yemek kaşığı" },
+        { name: "kuru nane", amount: "1", unit: "yemek kaşığı" },
+        { name: "sarımsak", amount: "1", unit: "diş" },
+        { name: "domates salçası", amount: "1", unit: "yemek kaşığı" },
+        { name: "tereyağı", amount: "1", unit: "yemek kaşığı" },
+        { name: "sıvı yağ", amount: "1", unit: "yemek kaşığı" },
+        { name: "su", amount: "7", unit: "su bardağı" },
+        { name: "tuz", amount: "1", unit: "tatlı kaşığı" },
+        { name: "pul biber (üzeri için)", amount: "1", unit: "tatlı kaşığı" },
+      ],
+    },
+  },
+
+  // ── Ezogelin Çorbası — kimyon opsiyonel + servis limonu, kavurma tekniği detaylı
+  // Mevcut tarif: salça ve nane çorbaya birlikte atılıyor. Yemek.com daha
+  // doğru: soğan + salça + nane ayrı tavada kavrulup çorbaya katılır.
+  // Klasik servis için yarım limon eksikti.
+  // Kaynak: https://yemek.com/tarif/ezogelin-corbasi/
+  {
+    title: "Ezogelin Çorbası",
+    replaceInstructions: [
+      "Sıcak suyu tencerede kaynatın, yıkanmış mercimek, pirinç, bulgur ve tuzu ekleyin.",
+      "Kısık ateşte mercimekler dağılana kadar 30 dakika pişirin.",
+      "Ayrı bir tavada tereyağını eritin, küp doğranmış soğanı pembeleştirin.",
+      "Salçayı ekleyip 1 dakika kavurun, sonra kuru naneyi katıp 30 saniye daha kavurun.",
+      "Kavurmayı çorbaya ekleyip 5 dakika daha pişirin.",
+      "Pul biber ve isteğe bağlı kimyon serpip karıştırın.",
+      "Servis tabaklarına alıp üzerine taze limon suyu sıkın.",
+    ],
+    updates: {
+      prepTime: 10,
+      cookTime: 40,
+      ingredients: [
+        { name: "kırmızı mercimek", amount: "0.5", unit: "su bardağı" },
+        { name: "bulgur", amount: "2", unit: "yemek kaşığı" },
+        { name: "pirinç", amount: "2", unit: "yemek kaşığı" },
+        { name: "soğan", amount: "1", unit: "adet" },
+        { name: "domates salçası", amount: "1", unit: "yemek kaşığı" },
+        { name: "tereyağı", amount: "2", unit: "yemek kaşığı" },
+        { name: "kuru nane", amount: "1", unit: "tatlı kaşığı" },
+        { name: "pul biber", amount: "1", unit: "tatlı kaşığı" },
+        { name: "kimyon", amount: "0.5", unit: "tatlı kaşığı", optional: true },
+        { name: "limon (servis için)", amount: "0.5", unit: "adet" },
+        { name: "tuz", amount: "1", unit: "tatlı kaşığı" },
+        { name: "sıcak su", amount: "7", unit: "su bardağı" },
+      ],
+    },
+  },
+
+  // ── Mantar Çorbası — limon (mantar kararma engeller) + dereotu üst süsü
+  // Mevcut tarif iyi ama yemek.com'a göre 2 küçük ekleme: mantarlar haşlama
+  // suyunda limon (kararmasın), servis sırasında dereotu.
+  // Kaynak: https://yemek.com/tarif/mantar-corbasi/
+  {
+    title: "Mantar Çorbası",
+    replaceInstructions: [
+      "Mantarları temizleyip dilimleyin, soğanı ince doğrayın.",
+      "Tereyağında soğanı pembeleştirin, mantarları ve birkaç damla limon suyunu ekleyin (kararmasın).",
+      "Mantarlar suyunu çekene kadar 5 dakika kavurun, unu ilave edip 1 dakika daha kavurun.",
+      "Suyu ve sütü yavaşça karıştırarak ekleyin, sürekli karıştırın.",
+      "Tuz ve karabiberle tatlandırıp kısık ateşte 10 dakika kaynatın.",
+      "Servis sırasında üzerine kıyılmış taze dereotu serpin.",
+    ],
+    updates: {
+      ingredients: [
+        { name: "mantar", amount: "300", unit: "gram" },
+        { name: "soğan", amount: "1", unit: "adet" },
+        { name: "un", amount: "2", unit: "yemek kaşığı" },
+        { name: "süt", amount: "2", unit: "su bardağı" },
+        { name: "tereyağı", amount: "3", unit: "yemek kaşığı" },
+        { name: "limon suyu", amount: "1", unit: "tatlı kaşığı" },
+        { name: "tuz", amount: "1", unit: "tatlı kaşığı" },
+        { name: "karabiber", amount: "1", unit: "tutam" },
+        { name: "su", amount: "3", unit: "su bardağı" },
+        { name: "taze dereotu (üzeri için)", amount: "1", unit: "yemek kaşığı" },
+      ],
+    },
+  },
+
+  // ── Düğün Çorbası — toz kırmızı biber + nane üst süsü (klasik tat)
+  // Mevcut tarif "üstüne pul biberli tereyağı" diyor — eksik: nane ve toz
+  // kırmızı biber. Düğün çorbasında bu üçü beraber yakılır.
+  // Kaynak: https://yemek.com/tarif/dugun-corbasi/
+  {
+    title: "Düğün Çorbası",
+    replaceInstructions: [
+      "Kuzu kuşbaşını yıkayıp tencereye alın, suyu ekleyip kaynatın, köpüğünü temizleyin.",
+      "Kısık ateşte 1 saat haşlayın, eti süzüp suyunu saklayın.",
+      "Yoğurt, un, yumurta sarısı ve limon suyunu derin kâsede telçırpıcıyla iyice çırpın.",
+      "Yoğurt karışımına azar azar 2 su bardağı sıcak et suyu ekleyerek tavlandırın (yoğurt kesilmesin).",
+      "Tavlandırılmış karışımı kalan et suyuna sürekli karıştırarak dökün, eti tencereye geri koyun.",
+      "Tuzu ekleyip sürekli karıştırarak 10 dakika kısık ateşte kaynatın.",
+      "Ayrı bir tavada tereyağını eritin, toz kırmızı biber, kuru nane ve pul biberi katıp 30 saniye yakın.",
+      "Servis sırasında bu yağı çorbanın üzerine gezdirin.",
+    ],
+    updates: {
+      ingredients: [
+        { name: "kuzu kuşbaşı", amount: "200", unit: "gram" },
+        { name: "yoğurt", amount: "1", unit: "su bardağı" },
+        { name: "yumurta sarısı", amount: "1", unit: "adet" },
+        { name: "un", amount: "1", unit: "yemek kaşığı" },
+        { name: "limon", amount: "0.5", unit: "adet" },
+        { name: "tuz", amount: "1", unit: "tatlı kaşığı" },
+        { name: "su", amount: "6", unit: "su bardağı" },
+        // Üzeri için
+        { name: "tereyağı (üzeri için)", amount: "2", unit: "yemek kaşığı" },
+        { name: "toz kırmızı biber", amount: "0.5", unit: "çay kaşığı" },
+        { name: "kuru nane", amount: "1", unit: "tutam" },
+        { name: "pul biber", amount: "1", unit: "tatlı kaşığı" },
+      ],
+    },
+  },
+
   // ── #2 İskender — yemek.com'a göre içerik zenginleştirildi
   // Mevcut tarif sadece 5 malzemeydi (et, pide, yoğurt, domates sosu, tereyağı)
   // — domates sosu ve et marinasyonu için detay eksikti.
