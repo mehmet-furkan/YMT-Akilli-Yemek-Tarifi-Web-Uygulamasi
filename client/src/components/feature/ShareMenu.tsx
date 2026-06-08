@@ -93,7 +93,9 @@ export function ShareMenu({ title, url }: ShareMenuProps) {
       {isOpen && (
         <div
           role="menu"
-          className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-30 bg-white rounded-2xl shadow-xl border border-stone-200 p-3 min-w-[280px]"
+          // right-0: popup butonun sağ kenarına yaslanır, soluna doğru genişler.
+          // Buton stats row'unun en sağındaysa popup ekran içinde kalır.
+          className="absolute top-full mt-2 right-0 z-30 bg-white rounded-2xl shadow-xl border border-stone-200 p-3 min-w-[280px]"
         >
           <div className="grid grid-cols-5 gap-2">
             <PlatformButton
