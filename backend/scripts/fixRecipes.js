@@ -68,6 +68,46 @@ const FIXES = [
     ],
     updates: { cookTime: 45 }, // 20 dk haşlama + 10 dk şeker + kıvam + 15 dk fırın
   },
+
+  // ── #2 İskender — yemek.com'a göre içerik zenginleştirildi
+  // Mevcut tarif sadece 5 malzemeydi (et, pide, yoğurt, domates sosu, tereyağı)
+  // — domates sosu ve et marinasyonu için detay eksikti.
+  // Kaynak: https://yemek.com/tarif/iskender/
+  {
+    title: "İskender",
+    replaceInstructions: [
+      "Antrikotu ince dilimleyip süt, ezilmiş sarımsak, salça, kekik, kırmızı biber ve tuzla harmanlayıp 1 saat marine edin.",
+      "Tırnak pideyi küp doğrayıp kuru tavada 1-2 dakika ısıtın, derin tabağa dizin.",
+      "Tereyağını eritip eti 6-8 dakika yüksek ateşte mühürleyin ve pidelerin üstüne koyun.",
+      "Domates sosu için: tereyağında salça ve kırmızı biberi kavurun, sıcak su ve tuz ekleyip 3 dakika kaynatın.",
+      "Yoğurdu pidelerin yanına yerleştirin, domates sosunu etin üstüne gezdirin.",
+      "Kalan tereyağını cızırdayana kadar ısıtıp tabağın üstüne dökerek sıcak servis edin.",
+    ],
+    updates: {
+      prepTime: 65, // 60 dk marinasyon + 5 dk hazırlık
+      cookTime: 15,
+      servings: 2,
+      ingredients: [
+        // Et için
+        { name: "antrikot (ince dilimlenmiş döner)", amount: "400", unit: "gram" },
+        { name: "süt", amount: "0.5", unit: "su bardağı" },
+        { name: "sarımsak", amount: "2", unit: "diş" },
+        { name: "salça", amount: "1", unit: "tatlı kaşığı" },
+        { name: "kekik", amount: "1", unit: "tatlı kaşığı" },
+        { name: "kırmızı toz biber", amount: "1", unit: "tatlı kaşığı" },
+        // Sos için
+        { name: "domates salçası", amount: "1", unit: "yemek kaşığı" },
+        { name: "kırmızı toz biber", amount: "1", unit: "tatlı kaşığı" },
+        { name: "sıcak su", amount: "1", unit: "su bardağı" },
+        // Servis için
+        { name: "tırnak pide", amount: "2", unit: "adet" },
+        { name: "süzme yoğurt", amount: "1", unit: "su bardağı" },
+        { name: "tereyağı", amount: "80", unit: "gram" },
+        { name: "tuz", amount: "1", unit: "tatlı kaşığı" },
+        { name: "karabiber", amount: "1", unit: "çay kaşığı" },
+      ],
+    },
+  },
 ];
 
 (async () => {
